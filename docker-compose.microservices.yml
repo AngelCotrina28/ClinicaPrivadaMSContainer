@@ -17,6 +17,41 @@ services:
       timeout: 5s
       retries: 10
 
+  mysql-caja:
+    image: mysql:8.4
+    container_name: clinica-mysql-caja
+    environment:
+      MYSQL_DATABASE: clinica_caja_db
+      MYSQL_USER: clinica_caja_user
+      MYSQL_PASSWORD: "${MYSQL_CAJA_PASSWORD:-ClinicaCajaMysqlLocal123!}"
+      MYSQL_ROOT_PASSWORD: "${MYSQL_CAJA_ROOT_PASSWORD:-ClinicaCajaRootLocal123!}"
+    ports:
+      - "3308:3306"
+    volumes:
+      - mysql_caja_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$${MYSQL_ROOT_PASSWORD}\" --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  postgres-atencion:
+    image: postgres:16-alpine
+    container_name: clinica-postgres-atencion
+    environment:
+      POSTGRES_DB: clinica_atencion_db
+      POSTGRES_USER: clinica_atencion_user
+      POSTGRES_PASSWORD: "${POSTGRES_ATENCION_PASSWORD:-ClinicaAtencionPostgresLocal123!}"
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_atencion_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U clinica_atencion_user -d clinica_atencion_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   postgres-notificaciones:
     image: postgres:16-alpine
     container_name: clinica-postgres-notificaciones
@@ -166,6 +201,62 @@ services:
       timeout: 5s
       retries: 10
 
+  atencion-medica-service:
+    build:
+      context: ./Clinica-Atencion-Medica-Service
+    image: clinica-atencion-medica-service:local
+    container_name: clinica-atencion-medica-service
+    environment:
+      SPRING_CONFIG_IMPORT: "configserver:http://config-server:8888"
+      EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka/"
+      ATENCION_DB_URL: "jdbc:postgresql://postgres-atencion:5432/clinica_atencion_db"
+      ATENCION_DB_USER: clinica_atencion_user
+      ATENCION_DB_PASSWORD: "${POSTGRES_ATENCION_PASSWORD:-ClinicaAtencionPostgresLocal123!}"
+      JWT_SECRET: "${JWT_SECRET:-Q2xpbmljYURlbW9TZWNyZXRMb2NhbFBhcmFEZXNhcnJvbGxvMjAyNg==}"
+      CORS_ALLOWED_ORIGINS: "http://localhost:4200,http://127.0.0.1:4200"
+    ports:
+      - "8094:8094"
+    depends_on:
+      postgres-atencion:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8094/actuator/health | grep UP"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  caja-facturacion-service:
+    build:
+      context: ./Clinica-Caja-Facturacion-Service
+    image: clinica-caja-facturacion-service:local
+    container_name: clinica-caja-facturacion-service
+    environment:
+      SPRING_CONFIG_IMPORT: "configserver:http://config-server:8888"
+      EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka/"
+      CAJA_DB_URL: "jdbc:mysql://mysql-caja:3306/clinica_caja_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+      CAJA_DB_USER: clinica_caja_user
+      CAJA_DB_PASSWORD: "${MYSQL_CAJA_PASSWORD:-ClinicaCajaMysqlLocal123!}"
+      JWT_SECRET: "${JWT_SECRET:-Q2xpbmljYURlbW9TZWNyZXRMb2NhbFBhcmFEZXNhcnJvbGxvMjAyNg==}"
+      CORS_ALLOWED_ORIGINS: "http://localhost:4200,http://127.0.0.1:4200"
+    ports:
+      - "8095:8095"
+    depends_on:
+      mysql-caja:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8095/actuator/health | grep UP"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
   gateway-service:
     build:
       context: ./Clinica-Gateway-Service
@@ -177,8 +268,12 @@ services:
       AUTH_SERVICE_URL: "http://auth-service:8091"
       NOTIFICACIONES_SERVICE_URL: "http://notificaciones-service:8092"
       CITAS_SERVICE_URL: "http://citas-service:8093"
+      ATENCION_SERVICE_URL: "http://atencion-medica-service:8094"
+      CAJA_SERVICE_URL: "http://caja-facturacion-service:8095"
       BACKEND_URL: "http://host.docker.internal:8080"
       CITAS_ROUTE_ENABLED: "true"
+      ATENCION_ROUTE_ENABLED: "true"
+      CAJA_ROUTE_ENABLED: "true"
       CORS_ALLOWED_ORIGINS: "http://localhost:4200,http://127.0.0.1:4200"
     ports:
       - "8090:8090"
@@ -188,6 +283,10 @@ services:
       notificaciones-service:
         condition: service_healthy
       citas-service:
+        condition: service_healthy
+      atencion-medica-service:
+        condition: service_healthy
+      caja-facturacion-service:
         condition: service_healthy
       eureka-server:
         condition: service_healthy
@@ -199,5 +298,7 @@ services:
 
 volumes:
   mysql_auth_data:
+  mysql_caja_data:
+  postgres_atencion_data:
   postgres_notificaciones_data:
   mongo_citas_data:

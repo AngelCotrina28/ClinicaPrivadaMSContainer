@@ -16,6 +16,8 @@
         <module>Clinica-Eureka-Server</module>
         <module>Clinica-Auth-Service</module>
         <module>Clinica-Citas-Service</module>
+        <module>Clinica-Atencion-Medica-Service</module>
+        <module>Clinica-Caja-Facturacion-Service</module>
         <module>Clinica-Notificaciones-Service</module>
         <module>Clinica-Gateway-Service</module>
     </modules>

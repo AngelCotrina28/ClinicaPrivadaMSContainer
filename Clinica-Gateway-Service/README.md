@@ -6,7 +6,15 @@ API Gateway para exponer una entrada unica hacia el sistema de clinica.
 
 Este servicio no guarda datos ni reemplaza a los microservicios. Su trabajo es recibir peticiones HTTP y enviarlas al servicio correcto.
 
-No se cuenta como uno de los 3 microservicios con base de datos propia. Los 3 microservicios pedidos son Auth, Notificaciones y Citas. El Gateway es infraestructura adicional para ordenar la comunicacion.
+No se cuenta como uno de los microservicios de negocio con base de datos propia. El Gateway es infraestructura adicional para ordenar la comunicacion entre frontend, backend monolitico y microservicios.
+
+Los 3 microservicios de negocio implementados son:
+
+- Citas
+- Atencion Medica
+- Caja y Facturacion
+
+Auth tambien es infraestructura y Notificaciones es apoyo.
 
 ## Rutas locales
 
@@ -15,6 +23,8 @@ Gateway:              http://localhost:8090
 Auth Service:         http://localhost:8091
 Notificaciones:       http://localhost:8092
 Citas Service:        http://localhost:8093
+Atencion Medica:      http://localhost:8094
+Caja Facturacion:     http://localhost:8095
 Backend monolitico:   http://localhost:8080
 ```
 
@@ -24,10 +34,12 @@ Backend monolitico:   http://localhost:8080
 /api/auth/**             -> Auth Service
 /api/notificaciones/**   -> Notificaciones Service
 /api/citas/**            -> Citas Service cuando CITAS_ROUTE_ENABLED=true
+/api/atenciones/**       -> Atencion Medica Service cuando ATENCION_ROUTE_ENABLED=true
+/api/caja/**             -> Caja Facturacion Service cuando CAJA_ROUTE_ENABLED=true
 /api/**                  -> Backend monolitico como fallback
 ```
 
-Mientras el microservicio de citas no exista, `CITAS_ROUTE_ENABLED=false` mantiene `/api/citas/**` apuntando al backend actual.
+Las rutas de negocio se activan con flags para permitir migracion gradual. Si un flag esta en `false`, el Gateway deja que esa ruta siga al backend monolitico como fallback.
 
 ## Ejecutar
 

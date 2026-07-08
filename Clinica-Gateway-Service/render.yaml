@@ -16,9 +16,17 @@ services:
         sync: false
       - key: CITAS_SERVICE_URL
         sync: false
+      - key: ATENCION_SERVICE_URL
+        sync: false
+      - key: CAJA_SERVICE_URL
+        sync: false
       - key: BACKEND_URL
         sync: false
       - key: CITAS_ROUTE_ENABLED
+        value: "false"
+      - key: ATENCION_ROUTE_ENABLED
+        value: "false"
+      - key: CAJA_ROUTE_ENABLED
         value: "false"
       - key: CORS_ALLOWED_ORIGINS
         sync: false

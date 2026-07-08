@@ -1,14 +1,14 @@
 # Propuesta de microservicios
 
-La propuesta para el sistema de Clinica Privada es separar el sistema en microservicios segun responsabilidades reales del negocio clinico, usando tres motores de base de datos.
+La propuesta implementada para el sistema de Clinica Privada separa el sistema en microservicios segun responsabilidades reales del negocio clinico, usando tres motores de base de datos.
 
 ## Microservicios de negocio
 
 | Microservicio | Que hace | Motor de BD |
 | --- | --- | --- |
 | `Clinica-Citas-Service` | Gestiona reserva, disponibilidad, consulta y cancelacion de citas medicas. | MongoDB |
-| `Clinica-Atencion-Medica-Service` | Gestiona atenciones medicas, diagnosticos, evolucion, historial clinico y recetas. | PostgreSQL |
-| `Clinica-Caja-Facturacion-Service` | Gestiona deudas, pagos, comprobantes, apertura, cierre y cuadre de caja. | MySQL |
+| `Clinica-Atencion-Medica-Service` | Gestiona atenciones medicas, diagnosticos, historial clinico, tratamientos y recetas. | PostgreSQL |
+| `Clinica-Caja-Facturacion-Service` | Gestiona deudas, pagos, comprobantes y resumen de caja. | MySQL |
 
 ## Microservicios de infraestructura
 
@@ -37,12 +37,12 @@ Aunque algunos microservicios comparten el mismo motor, cada microservicio manti
 
 ## Exposicion breve
 
-Nuestra propuesta de microservicios para la clinica privada separa el sistema en tres microservicios principales de negocio: Citas, Atencion Medica y Caja/Facturacion.
+Nuestra arquitectura de microservicios para la clinica privada separa el sistema en tres microservicios principales de negocio: Citas, Atencion Medica y Caja/Facturacion.
 
 `Clinica-Citas-Service` gestiona la agenda de citas medicas, disponibilidad de medicos y cancelaciones. Usara MongoDB porque una cita puede almacenarse como un documento completo con paciente, medico, fecha, horario, estado y consultorio.
 
-`Clinica-Atencion-Medica-Service` gestiona el proceso clinico del paciente: atenciones, diagnosticos, evolucion, historial y recetas. Usara PostgreSQL porque requiere informacion clinica estructurada y consistente.
+`Clinica-Atencion-Medica-Service` gestiona el proceso clinico del paciente: atenciones, diagnosticos, historial, tratamiento e indicaciones de receta. Usa PostgreSQL porque requiere informacion clinica estructurada y consistente.
 
-`Clinica-Caja-Facturacion-Service` gestiona la parte economica: deudas, pagos, comprobantes, apertura y cierre de caja. Usara MySQL porque es adecuado para procesos transaccionales.
+`Clinica-Caja-Facturacion-Service` gestiona la parte economica: deudas, pagos, comprobantes y resumen de caja. Usa MySQL porque es adecuado para procesos transaccionales.
 
 Ademas, se proponen microservicios de infraestructura como Auth, Gateway, Config Server y Eureka Server, y un microservicio de apoyo para Notificaciones.

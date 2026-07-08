@@ -21,6 +21,12 @@ public class GatewayInfoController {
                 "citas", Map.of(
                         "enabled", properties.isCitasRouteEnabled(),
                         "target", properties.getCitasServiceUrl() + "/api/citas/**"),
+                "atenciones", Map.of(
+                        "enabled", properties.isAtencionRouteEnabled(),
+                        "target", properties.getAtencionServiceUrl() + "/api/atenciones/**"),
+                "caja", Map.of(
+                        "enabled", properties.isCajaRouteEnabled(),
+                        "target", properties.getCajaServiceUrl() + "/api/caja/**"),
                 "backendFallback", properties.getBackendUrl() + "/api/**"));
     }
 }

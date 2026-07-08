@@ -23,6 +23,14 @@ public class GatewayRouter {
             return properties.getCitasServiceUrl() + path;
         }
 
+        if (path.startsWith("/api/atenciones") && properties.isAtencionRouteEnabled()) {
+            return properties.getAtencionServiceUrl() + path;
+        }
+
+        if (path.startsWith("/api/caja") && properties.isCajaRouteEnabled()) {
+            return properties.getCajaServiceUrl() + path;
+        }
+
         return properties.getBackendUrl() + path;
     }
 }

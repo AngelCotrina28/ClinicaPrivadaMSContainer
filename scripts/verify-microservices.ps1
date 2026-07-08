@@ -19,6 +19,8 @@ Invoke-Health "Gateway" "http://localhost:8090/actuator/health"
 Invoke-Health "Auth" "http://localhost:8091/actuator/health"
 Invoke-Health "Notificaciones" "http://localhost:8092/actuator/health"
 Invoke-Health "Citas" "http://localhost:8093/actuator/health"
+Invoke-Health "Atencion Medica" "http://localhost:8094/actuator/health"
+Invoke-Health "Caja Facturacion" "http://localhost:8095/actuator/health"
 
 $loginBody = @{ username = $adminUsername; password = $adminPassword } | ConvertTo-Json
 $login = Invoke-RestMethod `
@@ -72,6 +74,77 @@ $cita = Invoke-RestMethod `
     -TimeoutSec 10
 
 Write-Host "Cita creada por Gateway: ID=$($cita.id)"
+
+$atencionBody = @{
+    historiaClinicaId = 1
+    pacienteId = 1
+    medicoId = 10
+    citaId = "$($cita.id)"
+    motivoConsulta = "Dolor abdominal"
+    diagnostico = "Gastritis probable"
+    tratamiento = "Control dietario y medicacion indicada"
+    indicacionesReceta = "Tomar medicamento despues de alimentos"
+} | ConvertTo-Json
+
+$atencion = Invoke-RestMethod `
+    -Uri "http://localhost:8090/api/atenciones" `
+    -Method Post `
+    -Body $atencionBody `
+    -ContentType "application/json" `
+    -Headers $headers `
+    -TimeoutSec 10
+
+Write-Host "Atencion medica registrada por Gateway: ID=$($atencion.id)"
+
+$cerrarAtencionBody = @{
+    tratamiento = "Tratamiento final registrado"
+    indicacionesReceta = "Reposo relativo y control en 7 dias"
+} | ConvertTo-Json
+
+$atencionCerrada = Invoke-RestMethod `
+    -Uri "http://localhost:8090/api/atenciones/$($atencion.id)/cerrar" `
+    -Method Patch `
+    -Body $cerrarAtencionBody `
+    -ContentType "application/json" `
+    -Headers $headers `
+    -TimeoutSec 10
+
+Write-Host "Atencion medica cerrada: $($atencionCerrada.estado)"
+
+$deudaBody = @{
+    pacienteId = 1
+    concepto = "Consulta medica"
+    referenciaTipo = "ATENCION"
+    referenciaId = "$($atencion.id)"
+    montoTotal = 80.00
+} | ConvertTo-Json
+
+$deuda = Invoke-RestMethod `
+    -Uri "http://localhost:8090/api/caja/deudas" `
+    -Method Post `
+    -Body $deudaBody `
+    -ContentType "application/json" `
+    -Headers $headers `
+    -TimeoutSec 10
+
+Write-Host "Deuda creada por Gateway: ID=$($deuda.id) Saldo=$($deuda.saldo)"
+
+$pagoBody = @{
+    deudaId = $deuda.id
+    monto = 80.00
+    metodoPago = "EFECTIVO"
+    observacion = "Pago de prueba de microservicios"
+} | ConvertTo-Json
+
+$pago = Invoke-RestMethod `
+    -Uri "http://localhost:8090/api/caja/pagos" `
+    -Method Post `
+    -Body $pagoBody `
+    -ContentType "application/json" `
+    -Headers $headers `
+    -TimeoutSec 10
+
+Write-Host "Pago registrado por Gateway: ID=$($pago.id) Comprobante=$($pago.numeroComprobante)"
 
 try {
     Invoke-RestMethod `

@@ -12,13 +12,15 @@ Se implementaron 3 microservicios con base de datos propia y gestor distinto:
 | Apoyo | `Clinica-Notificaciones-Service` | 8092 | PostgreSQL | `clinica_notificaciones_db` | Avisos y notificaciones del sistema |
 | Negocio | `Clinica-Citas-Service` | 8093 | MongoDB | `clinica_citas_db` | Reserva, disponibilidad y cancelacion de citas |
 
-Ademas, se implemento un API Gateway:
+Ademas, se implementaron servicios de infraestructura para seguir la arquitectura vista en clase:
 
 | Componente | Puerto local | Base de datos | Responsabilidad |
 | --- | ---: | --- | --- |
+| `Clinica-Config-Server` | 8888 | No aplica | Centraliza configuraciones |
+| `Clinica-Eureka-Server` | 8761 | No aplica | Registro y descubrimiento de servicios |
 | `Clinica-Gateway-Service` | 8090 | No aplica | Entrada unica y enrutamiento hacia los servicios |
 
-El Gateway no guarda informacion de negocio. Por eso no necesita base de datos y no se cuenta como uno de los 3 microservicios con datos propios.
+Config, Eureka y Gateway no guardan informacion de negocio. Por eso no necesitan base de datos y no se cuentan como microservicios con datos propios.
 
 ## Por que cada microservicio tiene su propia BD y gestor
 
@@ -59,6 +61,14 @@ Clinica-Gateway-Service :8090
    |                                BD: clinica_citas_db
    |
    |-- /api/** restante         -> Backend original :8080
+
+Servicios de infraestructura:
+
+Clinica-Config-Server :8888
+   |-- entrega configuracion centralizada
+
+Clinica-Eureka-Server :8761
+   |-- registra Auth, Citas, Notificaciones y Gateway
 ```
 
 ## Bases de datos creadas
@@ -104,4 +114,4 @@ PATCH /api/citas/{id}/cancelar
 
 ## Frase para exposicion
 
-El sistema original era un monolito modular. Para cumplir el requerimiento se agregaron tres microservicios independientes: Auth como infraestructura, Notificaciones como apoyo y Citas como negocio. Cada uno corre como una aplicacion separada, expone su propia API y usa una base de datos propia. La arquitectura usa tres gestores: MySQL, PostgreSQL y MongoDB. El Gateway se agrego como componente de entrada para enrutar las peticiones, pero no guarda datos.
+El sistema original era un monolito modular. Para cumplir el requerimiento se agregaron microservicios independientes: Auth como infraestructura, Notificaciones como apoyo y Citas como negocio implementado. Cada uno corre como una aplicacion separada, expone su propia API y usa una base de datos propia cuando corresponde. La arquitectura usa tres gestores: MySQL, PostgreSQL y MongoDB. Tambien se agregaron Config Server, Eureka Server y Gateway para seguir el patron de clase: configuracion centralizada, descubrimiento de servicios y entrada unica al sistema.

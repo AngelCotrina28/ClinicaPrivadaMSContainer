@@ -15,6 +15,7 @@ La propuesta para el sistema de Clinica Privada es separar el sistema en microse
 | Microservicio | Que hace | Motor de BD |
 | --- | --- | --- |
 | `Clinica-Config-Server` | Centraliza la configuracion de los demas microservicios por ambiente. | No requiere BD |
+| `Clinica-Eureka-Server` | Registra los microservicios activos y permite descubrirlos sin IPs fijas. | No requiere BD |
 | `Clinica-Gateway-Service` | Recibe las peticiones del frontend y las redirige al microservicio correspondiente. | No requiere BD |
 | `Clinica-Auth-Service` | Gestiona login, usuarios, roles y emision de tokens JWT. | MySQL |
 
@@ -44,4 +45,4 @@ Nuestra propuesta de microservicios para la clinica privada separa el sistema en
 
 `Clinica-Caja-Facturacion-Service` gestiona la parte economica: deudas, pagos, comprobantes, apertura y cierre de caja. Usara MySQL porque es adecuado para procesos transaccionales.
 
-Ademas, se proponen microservicios de infraestructura como Auth, Gateway y Config Server, y un microservicio de apoyo para Notificaciones.
+Ademas, se proponen microservicios de infraestructura como Auth, Gateway, Config Server y Eureka Server, y un microservicio de apoyo para Notificaciones.

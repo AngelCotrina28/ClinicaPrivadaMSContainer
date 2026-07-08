@@ -1,11 +1,7 @@
 $ErrorActionPreference = "Stop"
 
 $adminUsername = if ($env:AUTH_ADMIN_USERNAME) { $env:AUTH_ADMIN_USERNAME } else { "admin" }
-$adminPassword = $env:AUTH_ADMIN_PASSWORD
-
-if (-not $adminPassword) {
-    throw "Define AUTH_ADMIN_PASSWORD en tu sesion antes de validar. Ejemplo: `$env:AUTH_ADMIN_PASSWORD='tu-password-admin'"
-}
+$adminPassword = if ($env:AUTH_ADMIN_PASSWORD) { $env:AUTH_ADMIN_PASSWORD } else { "ClinicaAdminLocal123!" }
 
 function Invoke-Health($name, $url) {
     try {
@@ -17,6 +13,8 @@ function Invoke-Health($name, $url) {
     }
 }
 
+Invoke-Health "Config Server" "http://localhost:8888/actuator/health"
+Invoke-Health "Eureka" "http://localhost:8761/actuator/health"
 Invoke-Health "Gateway" "http://localhost:8090/actuator/health"
 Invoke-Health "Auth" "http://localhost:8091/actuator/health"
 Invoke-Health "Notificaciones" "http://localhost:8092/actuator/health"

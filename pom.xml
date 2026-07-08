@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.clinica</groupId>
+    <artifactId>clinica-privada-ms-container</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <name>Clinica Privada MS Container</name>
+    <description>Repositorio contenedor de microservicios para Clinica Privada</description>
+
+    <modules>
+        <module>Clinica-Config-Server</module>
+        <module>Clinica-Eureka-Server</module>
+        <module>Clinica-Auth-Service</module>
+        <module>Clinica-Citas-Service</module>
+        <module>Clinica-Notificaciones-Service</module>
+        <module>Clinica-Gateway-Service</module>
+    </modules>
+</project>

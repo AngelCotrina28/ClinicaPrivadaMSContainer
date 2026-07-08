@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: clinica-gateway-service
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /actuator/health
+    autoDeployTrigger: commit
+    envVars:
+      - key: PORT
+        value: "10000"
+      - key: AUTH_SERVICE_URL
+        sync: false
+      - key: NOTIFICACIONES_SERVICE_URL
+        sync: false
+      - key: CITAS_SERVICE_URL
+        sync: false
+      - key: BACKEND_URL
+        sync: false
+      - key: CITAS_ROUTE_ENABLED
+        value: "false"
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false

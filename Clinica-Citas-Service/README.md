@@ -14,7 +14,7 @@ Este servicio representa una capacidad central de la clinica:
 
 ## Base de datos propia
 
-Usa SQL Server como gestor de base de datos.
+Usa MongoDB como gestor de base de datos.
 
 Base de datos:
 
@@ -22,7 +22,7 @@ Base de datos:
 clinica_citas_db
 ```
 
-Tabla principal:
+Coleccion principal:
 
 - `citas`
 

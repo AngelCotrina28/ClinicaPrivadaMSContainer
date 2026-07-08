@@ -31,7 +31,7 @@ public class CitaController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> obtener(@PathVariable Long id) {
+    public ResponseEntity<?> obtener(@PathVariable String id) {
         return ResponseEntity.ok(citaService.obtener(id));
     }
 
@@ -56,7 +56,7 @@ public class CitaController {
 
     @PatchMapping("/{id}/cancelar")
     public ResponseEntity<?> cancelar(
-            @PathVariable Long id,
+            @PathVariable String id,
             @RequestBody(required = false) @Valid CancelarCitaRequestDTO request) {
         return ResponseEntity.ok(citaService.cancelar(id, request));
     }

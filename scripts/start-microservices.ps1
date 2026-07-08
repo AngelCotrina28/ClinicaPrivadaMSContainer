@@ -2,7 +2,7 @@ $ErrorActionPreference = "Stop"
 
 $root = Split-Path -Parent $PSScriptRoot
 
-Write-Host "Levantando gestores de BD para microservicios: PostgreSQL y SQL Server..."
+Write-Host "Levantando gestores de BD para microservicios: PostgreSQL y MongoDB..."
 Push-Location $root
 try {
     docker compose -f docker-compose.microservices.yml up -d | Out-Host
@@ -11,8 +11,6 @@ try {
 }
 
 Start-Sleep -Seconds 5
-
-& (Join-Path $PSScriptRoot "init-sqlserver-citas.ps1")
 
 $services = @(
     @{ Name = "Auth"; Path = "Clinica-Auth-Service"; Jar = "auth-service-0.0.1-SNAPSHOT.jar"; Port = 8091; PidFile = ".auth-service.pid"; Log = "auth-service.out.log"; Err = "auth-service.err.log" },

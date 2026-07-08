@@ -10,7 +10,7 @@ Se implementaron 3 microservicios con base de datos propia y gestor distinto:
 | --- | --- | ---: | --- | --- | --- |
 | Infraestructura | `Clinica-Auth-Service` | 8091 | MySQL | `clinica_auth_db` | Login, usuarios, roles y JWT |
 | Apoyo | `Clinica-Notificaciones-Service` | 8092 | PostgreSQL | `clinica_notificaciones_db` | Avisos y notificaciones del sistema |
-| Negocio | `Clinica-Citas-Service` | 8093 | SQL Server | `clinica_citas_db` | Reserva, disponibilidad y cancelacion de citas |
+| Negocio | `Clinica-Citas-Service` | 8093 | MongoDB | `clinica_citas_db` | Reserva, disponibilidad y cancelacion de citas |
 
 Ademas, se implemento un API Gateway:
 
@@ -28,7 +28,7 @@ En esta implementacion, ademas, cada microservicio usa un gestor diferente para 
 
 - Auth usa MySQL.
 - Notificaciones usa PostgreSQL.
-- Citas usa SQL Server.
+- Citas usa MongoDB.
 
 Ejemplo:
 
@@ -36,7 +36,7 @@ Ejemplo:
 - Citas no consulta directamente la tabla `usuarios`.
 - Citas solo valida el JWT emitido por Auth.
 - Notificaciones guarda sus mensajes en `clinica_notificaciones_db` con PostgreSQL.
-- Citas guarda sus reservas en `clinica_citas_db` con SQL Server.
+- Citas guarda sus reservas en `clinica_citas_db` con MongoDB.
 
 ## Arquitectura local
 
@@ -55,7 +55,7 @@ Clinica-Gateway-Service :8090
    |                                BD: clinica_notificaciones_db
    |
    |-- /api/citas/**            -> Clinica-Citas-Service :8093
-   |                                Gestor: SQL Server
+   |                                Gestor: MongoDB
    |                                BD: clinica_citas_db
    |
    |-- /api/** restante         -> Backend original :8080
@@ -67,7 +67,7 @@ Clinica-Gateway-Service :8090
 | --- | --- | --- |
 | MySQL | `clinica_auth_db` | `clinica_auth_user` |
 | PostgreSQL | `clinica_notificaciones_db` | `clinica_notificaciones_user` |
-| SQL Server | `clinica_citas_db` | `sa` local / usuario SQL Server en despliegue |
+| MongoDB | `clinica_citas_db` | `clinica_citas_admin` local / usuario MongoDB en despliegue |
 
 ## Endpoints principales
 
@@ -104,4 +104,4 @@ PATCH /api/citas/{id}/cancelar
 
 ## Frase para exposicion
 
-El sistema original era un monolito modular. Para cumplir el requerimiento se agregaron tres microservicios independientes: Auth como infraestructura, Notificaciones como apoyo y Citas como negocio. Cada uno corre como una aplicacion separada, expone su propia API y usa una base de datos propia con un gestor diferente: MySQL, PostgreSQL y SQL Server. El Gateway se agrego como componente de entrada para enrutar las peticiones, pero no guarda datos.
+El sistema original era un monolito modular. Para cumplir el requerimiento se agregaron tres microservicios independientes: Auth como infraestructura, Notificaciones como apoyo y Citas como negocio. Cada uno corre como una aplicacion separada, expone su propia API y usa una base de datos propia. La arquitectura usa tres gestores: MySQL, PostgreSQL y MongoDB. El Gateway se agrego como componente de entrada para enrutar las peticiones, pero no guarda datos.

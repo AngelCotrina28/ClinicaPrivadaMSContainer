@@ -11,7 +11,7 @@ import lombok.Data;
 @Data
 @Builder
 public class CitaResponseDTO {
-    private Long id;
+    private String id;
     private Long pacienteId;
     private Long medicoId;
     private Long especialidadId;

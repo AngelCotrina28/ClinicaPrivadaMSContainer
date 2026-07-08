@@ -10,8 +10,10 @@ La idea es mantener en una sola carpeta todos los backends independientes que fo
 | --- | --- | ---: | --- | --- |
 | Infraestructura | `Clinica-Auth-Service` | 8091 | MySQL | Login, usuarios, roles y emision de JWT |
 | Apoyo | `Clinica-Notificaciones-Service` | 8092 | PostgreSQL | Registro y consulta de notificaciones |
-| Negocio | `Clinica-Citas-Service` | 8093 | SQL Server | Reserva, disponibilidad y cancelacion de citas |
+| Negocio | `Clinica-Citas-Service` | 8093 | MongoDB | Reserva, disponibilidad y cancelacion de citas |
 | Gateway | `Clinica-Gateway-Service` | 8090 | No aplica | Entrada unica y enrutamiento hacia los microservicios |
+
+La propuesta completa con tres microservicios de negocio esta documentada en `PROPUESTA_MICROSERVICIOS.md`.
 
 ## Estructura
 

@@ -8,12 +8,12 @@ import com.clinica.citas.entities.Cita;
 import com.clinica.citas.entities.EstadoCita;
 import com.clinica.citas.repositories.CitaRepository;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -26,10 +26,10 @@ public class CitaService {
 
     private final CitaRepository citaRepository;
 
-    @Transactional
     public CitaResponseDTO crear(CrearCitaRequestDTO request) {
         validarHorario(request.getHoraInicio(), request.getHoraFin());
         validarCruce(request.getMedicoId(), request.getFecha(), request.getHoraInicio(), request.getHoraFin());
+        LocalDateTime ahora = LocalDateTime.now();
 
         Cita cita = Cita.builder()
                 .pacienteId(request.getPacienteId())
@@ -41,31 +41,29 @@ public class CitaService {
                 .consultorio(normalizarOpcional(request.getConsultorio()))
                 .motivo(normalizarOpcional(request.getMotivo()))
                 .estado(EstadoCita.PROGRAMADA)
+                .createdAt(ahora)
+                .updatedAt(ahora)
                 .build();
 
         return CitaResponseDTO.fromEntity(citaRepository.save(cita));
     }
 
-    @Transactional(readOnly = true)
-    public CitaResponseDTO obtener(Long id) {
+    public CitaResponseDTO obtener(String id) {
         return CitaResponseDTO.fromEntity(buscar(id));
     }
 
-    @Transactional(readOnly = true)
     public List<CitaResponseDTO> listarPorPaciente(Long pacienteId) {
         return citaRepository.findByPacienteIdOrderByFechaDescHoraInicioDesc(pacienteId).stream()
                 .map(CitaResponseDTO::fromEntity)
                 .toList();
     }
 
-    @Transactional(readOnly = true)
     public List<CitaResponseDTO> listarPorMedico(Long medicoId, LocalDate fecha) {
         return citaRepository.findByMedicoIdAndFechaOrderByHoraInicioAsc(medicoId, fecha).stream()
                 .map(CitaResponseDTO::fromEntity)
                 .toList();
     }
 
-    @Transactional(readOnly = true)
     public List<DisponibilidadResponseDTO> disponibilidad(Long medicoId, LocalDate fecha) {
         List<Cita> citas = citaRepository.findByMedicoIdAndFechaOrderByHoraInicioAsc(medicoId, fecha).stream()
                 .filter(cita -> cita.getEstado() == EstadoCita.PROGRAMADA)
@@ -77,8 +75,7 @@ public class CitaService {
         return bloques;
     }
 
-    @Transactional
-    public CitaResponseDTO cancelar(Long id, CancelarCitaRequestDTO request) {
+    public CitaResponseDTO cancelar(String id, CancelarCitaRequestDTO request) {
         Cita cita = buscar(id);
         if (cita.getEstado() != EstadoCita.PROGRAMADA) {
             throw new IllegalArgumentException("Solo se pueden cancelar citas programadas.");
@@ -86,10 +83,11 @@ public class CitaService {
 
         cita.setEstado(EstadoCita.CANCELADA);
         cita.setMotivoCancelacion(normalizarOpcional(request == null ? null : request.getMotivoCancelacion()));
+        cita.setUpdatedAt(LocalDateTime.now());
         return CitaResponseDTO.fromEntity(citaRepository.save(cita));
     }
 
-    private Cita buscar(Long id) {
+    private Cita buscar(String id) {
         return citaRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("La cita indicada no existe."));
     }
@@ -112,9 +110,9 @@ public class CitaService {
     }
 
     private void validarCruce(Long medicoId, LocalDate fecha, LocalTime horaInicio, LocalTime horaFin) {
-        boolean existeCruce = !citaRepository
-                .buscarCruces(medicoId, fecha, horaInicio, horaFin, EstadoCita.PROGRAMADA)
-                .isEmpty();
+        boolean existeCruce = citaRepository.findByMedicoIdAndFechaOrderByHoraInicioAsc(medicoId, fecha).stream()
+                .filter(cita -> cita.getEstado() == EstadoCita.PROGRAMADA)
+                .anyMatch(cita -> cita.getHoraInicio().isBefore(horaFin) && cita.getHoraFin().isAfter(horaInicio));
 
         if (existeCruce) {
             throw new IllegalArgumentException("El medico ya tiene una cita programada en ese horario.");

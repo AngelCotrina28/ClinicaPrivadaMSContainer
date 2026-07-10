@@ -10,6 +10,8 @@ import java.time.Duration;
 import java.util.Enumeration;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -17,6 +19,8 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class ProxyService {
+
+    private static final Logger logger = LoggerFactory.getLogger(ProxyService.class);
 
     private static final Set<String> HOP_BY_HOP_HEADERS = Set.of(
             "connection",
@@ -31,6 +35,18 @@ public class ProxyService {
             "transfer-encoding",
             "upgrade");
 
+    private static final Set<String> REQUEST_HEADERS_PERMITIDOS = Set.of(
+            "authorization",
+            "content-type",
+            "accept",
+            "origin",
+            "x-requested-with");
+
+    private static final Set<String> RESPONSE_HEADERS_PERMITIDOS = Set.of(
+            "authorization",
+            "content-type",
+            "location");
+
     private final GatewayRouter router;
     private final HttpClient httpClient = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(10))
@@ -39,6 +55,7 @@ public class ProxyService {
     public ResponseEntity<byte[]> reenviar(HttpServletRequest request) throws IOException, InterruptedException {
         String destino = construirDestino(request);
         byte[] body = request.getInputStream().readAllBytes();
+        logger.info("Gateway proxy {} {}", request.getMethod(), destino);
 
         HttpRequest.Builder builder = HttpRequest.newBuilder()
                 .uri(URI.create(destino))
@@ -74,7 +91,8 @@ public class ProxyService {
         Enumeration<String> headerNames = request.getHeaderNames();
         while (headerNames.hasMoreElements()) {
             String headerName = headerNames.nextElement();
-            if (HOP_BY_HOP_HEADERS.contains(headerName.toLowerCase())) {
+            String normalized = headerName.toLowerCase();
+            if (HOP_BY_HOP_HEADERS.contains(normalized) || !REQUEST_HEADERS_PERMITIDOS.contains(normalized)) {
                 continue;
             }
 
@@ -88,7 +106,8 @@ public class ProxyService {
     private HttpHeaders copiarResponseHeaders(HttpResponse<byte[]> response) {
         HttpHeaders headers = new HttpHeaders();
         response.headers().map().forEach((name, values) -> {
-            if (!HOP_BY_HOP_HEADERS.contains(name.toLowerCase())) {
+            String normalized = name.toLowerCase();
+            if (!HOP_BY_HOP_HEADERS.contains(normalized) && RESPONSE_HEADERS_PERMITIDOS.contains(normalized)) {
                 values.forEach(value -> headers.add(name, value));
             }
         });

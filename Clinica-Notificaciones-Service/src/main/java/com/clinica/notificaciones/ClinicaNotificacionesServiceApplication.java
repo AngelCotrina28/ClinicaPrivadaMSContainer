@@ -26,6 +26,15 @@ public class ClinicaNotificacionesServiceApplication {
             }
         });
 
+        normalizarJdbcUrl("NOTIFICACIONES_DB_URL");
+
         SpringApplication.run(ClinicaNotificacionesServiceApplication.class, args);
+    }
+
+    private static void normalizarJdbcUrl(String key) {
+        String value = System.getenv(key);
+        if (value != null) {
+            System.setProperty(key, value.replace("\r", "").replace("\n", "").trim());
+        }
     }
 }

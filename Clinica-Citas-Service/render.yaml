@@ -22,3 +22,5 @@ services:
         value: "false"
       - key: EUREKA_CLIENT_ENABLED
         value: "false"
+      - key: MONGODB_HEALTH_ENABLED
+        value: "false"

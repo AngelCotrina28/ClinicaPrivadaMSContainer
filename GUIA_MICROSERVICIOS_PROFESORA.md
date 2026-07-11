@@ -26,7 +26,7 @@ Config, Eureka y Gateway no guardan informacion de negocio. Por eso no necesitan
 
 ## Por que cada microservicio tiene su propia BD y gestor
 
-En microservicios, cada servicio debe ser dueño de sus datos. Eso evita que otro servicio toque sus tablas directamente.
+En microservicios, cada servicio debe ser dueno de sus datos. Eso evita que otro servicio toque sus tablas directamente.
 
 En esta implementacion, ademas, cada microservicio usa un gestor diferente para cumplir el requisito de la profesora:
 
@@ -82,6 +82,24 @@ Clinica-Config-Server :8888
 Clinica-Eureka-Server :8761
    |-- registra Auth, Citas, Notificaciones y Gateway
 ```
+
+## Despliegue local pedido en clase
+
+El repositorio contenedor permite dos formas de ejecucion local:
+
+| Forma | Archivos principales | Comando |
+| --- | --- | --- |
+| Docker Compose | `docker-compose.microservices.yml` | `.\scripts\start-microservices.ps1` |
+| Kubernetes | `k8s/` | `.\scripts\start-k8s.ps1` |
+
+La validacion funcional se hace por Gateway:
+
+```powershell
+.\scripts\verify-microservices.ps1
+.\scripts\verify-k8s.ps1
+```
+
+Esto sigue la secuencia explicada en clase: primero bases de datos, luego Config Server, Eureka Server, microservicios y finalmente Gateway.
 
 ## Bases de datos creadas
 

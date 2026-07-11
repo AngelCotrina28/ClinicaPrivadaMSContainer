@@ -1,0 +1,357 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service
+  namespace: clinica-ms
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: auth-service
+  template:
+    metadata:
+      labels:
+        app: auth-service
+    spec:
+      containers:
+        - name: auth-service
+          image: clinica-auth-service:local
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8091
+          env:
+            - name: SPRING_CONFIG_IMPORT
+              valueFrom:
+                configMapKeyRef:
+                  name: clinica-ms-shared-config
+                  key: SPRING_CONFIG_IMPORT
+            - name: EUREKA_DEFAULT_ZONE
+              valueFrom:
+                configMapKeyRef:
+                  name: clinica-ms-shared-config
+                  key: EUREKA_DEFAULT_ZONE
+            - name: AUTH_DB_URL
+              value: jdbc:mysql://mysql-auth:3306/clinica_auth_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+            - name: AUTH_DB_USER
+              value: clinica_auth_user
+            - name: AUTH_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: clinica-ms-secrets
+                  key: mysql-auth-password
+            - name: AUTH_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: clinica-ms-secrets
+                  key: auth-admin-password
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: clinica-ms-secrets
+                  key: jwt-secret
+            - name: CORS_ALLOWED_ORIGINS
+              valueFrom:
+                configMapKeyRef:
+                  name: clinica-ms-shared-config
+                  key: CORS_ALLOWED_ORIGINS
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8091
+            initialDelaySeconds: 45
+            periodSeconds: 10
+            failureThreshold: 20
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-service
+  namespace: clinica-ms
+spec:
+  selector:
+    app: auth-service
+  ports:
+    - port: 8091
+      targetPort: 8091
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notificaciones-service
+  namespace: clinica-ms
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: notificaciones-service
+  template:
+    metadata:
+      labels:
+        app: notificaciones-service
+    spec:
+      containers:
+        - name: notificaciones-service
+          image: clinica-notificaciones-service:local
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8092
+          env:
+            - name: SPRING_CONFIG_IMPORT
+              valueFrom:
+                configMapKeyRef:
+                  name: clinica-ms-shared-config
+                  key: SPRING_CONFIG_IMPORT
+            - name: EUREKA_DEFAULT_ZONE
+              valueFrom:
+                configMapKeyRef:
+                  name: clinica-ms-shared-config
+                  key: EUREKA_DEFAULT_ZONE
+            - name: NOTIFICACIONES_DB_URL
+              value: jdbc:postgresql://postgres-notificaciones:5432/clinica_notificaciones_db
+            - name: NOTIFICACIONES_DB_USER
+              value: clinica_notificaciones_user
+            - name: NOTIFICACIONES_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: clinica-ms-secrets
+                  key: postgres-notificaciones-password
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: clinica-ms-secrets
+                  key: jwt-secret
+            - name: CORS_ALLOWED_ORIGINS
+              valueFrom:
+                configMapKeyRef:
+                  name: clinica-ms-shared-config
+                  key: CORS_ALLOWED_ORIGINS
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8092
+            initialDelaySeconds: 45
+            periodSeconds: 10
+            failureThreshold: 20
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: notificaciones-service
+  namespace: clinica-ms
+spec:
+  selector:
+    app: notificaciones-service
+  ports:
+    - port: 8092
+      targetPort: 8092
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: citas-service
+  namespace: clinica-ms
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: citas-service
+  template:
+    metadata:
+      labels:
+        app: citas-service
+    spec:
+      containers:
+        - name: citas-service
+          image: clinica-citas-service:local
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8093
+          env:
+            - name: MONGO_CITAS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: clinica-ms-secrets
+                  key: mongo-citas-password
+            - name: SPRING_CONFIG_IMPORT
+              valueFrom:
+                configMapKeyRef:
+                  name: clinica-ms-shared-config
+                  key: SPRING_CONFIG_IMPORT
+            - name: EUREKA_DEFAULT_ZONE
+              valueFrom:
+                configMapKeyRef:
+                  name: clinica-ms-shared-config
+                  key: EUREKA_DEFAULT_ZONE
+            - name: CITAS_MONGO_URI
+              value: mongodb://clinica_citas_admin:$(MONGO_CITAS_PASSWORD)@mongo-citas:27017/clinica_citas_db?authSource=admin
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: clinica-ms-secrets
+                  key: jwt-secret
+            - name: CORS_ALLOWED_ORIGINS
+              valueFrom:
+                configMapKeyRef:
+                  name: clinica-ms-shared-config
+                  key: CORS_ALLOWED_ORIGINS
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8093
+            initialDelaySeconds: 45
+            periodSeconds: 10
+            failureThreshold: 20
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: citas-service
+  namespace: clinica-ms
+spec:
+  selector:
+    app: citas-service
+  ports:
+    - port: 8093
+      targetPort: 8093
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: atencion-medica-service
+  namespace: clinica-ms
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: atencion-medica-service
+  template:
+    metadata:
+      labels:
+        app: atencion-medica-service
+    spec:
+      containers:
+        - name: atencion-medica-service
+          image: clinica-atencion-medica-service:local
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8094
+          env:
+            - name: SPRING_CONFIG_IMPORT
+              valueFrom:
+                configMapKeyRef:
+                  name: clinica-ms-shared-config
+                  key: SPRING_CONFIG_IMPORT
+            - name: EUREKA_DEFAULT_ZONE
+              valueFrom:
+                configMapKeyRef:
+                  name: clinica-ms-shared-config
+                  key: EUREKA_DEFAULT_ZONE
+            - name: ATENCION_DB_URL
+              value: jdbc:postgresql://postgres-atencion:5432/clinica_atencion_db
+            - name: ATENCION_DB_USER
+              value: clinica_atencion_user
+            - name: ATENCION_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: clinica-ms-secrets
+                  key: postgres-atencion-password
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: clinica-ms-secrets
+                  key: jwt-secret
+            - name: CORS_ALLOWED_ORIGINS
+              valueFrom:
+                configMapKeyRef:
+                  name: clinica-ms-shared-config
+                  key: CORS_ALLOWED_ORIGINS
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8094
+            initialDelaySeconds: 45
+            periodSeconds: 10
+            failureThreshold: 20
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: atencion-medica-service
+  namespace: clinica-ms
+spec:
+  selector:
+    app: atencion-medica-service
+  ports:
+    - port: 8094
+      targetPort: 8094
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: caja-facturacion-service
+  namespace: clinica-ms
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: caja-facturacion-service
+  template:
+    metadata:
+      labels:
+        app: caja-facturacion-service
+    spec:
+      containers:
+        - name: caja-facturacion-service
+          image: clinica-caja-facturacion-service:local
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8095
+          env:
+            - name: SPRING_CONFIG_IMPORT
+              valueFrom:
+                configMapKeyRef:
+                  name: clinica-ms-shared-config
+                  key: SPRING_CONFIG_IMPORT
+            - name: EUREKA_DEFAULT_ZONE
+              valueFrom:
+                configMapKeyRef:
+                  name: clinica-ms-shared-config
+                  key: EUREKA_DEFAULT_ZONE
+            - name: CAJA_DB_URL
+              value: jdbc:mysql://mysql-caja:3306/clinica_caja_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+            - name: CAJA_DB_USER
+              value: clinica_caja_user
+            - name: CAJA_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: clinica-ms-secrets
+                  key: mysql-caja-password
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: clinica-ms-secrets
+                  key: jwt-secret
+            - name: CORS_ALLOWED_ORIGINS
+              valueFrom:
+                configMapKeyRef:
+                  name: clinica-ms-shared-config
+                  key: CORS_ALLOWED_ORIGINS
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8095
+            initialDelaySeconds: 45
+            periodSeconds: 10
+            failureThreshold: 20
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: caja-facturacion-service
+  namespace: clinica-ms
+spec:
+  selector:
+    app: caja-facturacion-service
+  ports:
+    - port: 8095
+      targetPort: 8095

@@ -1,0 +1,364 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-auth-data
+  namespace: clinica-ms
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-caja-data
+  namespace: clinica-ms
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-atencion-data
+  namespace: clinica-ms
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-notificaciones-data
+  namespace: clinica-ms
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mongo-citas-data
+  namespace: clinica-ms
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-auth
+  namespace: clinica-ms
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql-auth
+  template:
+    metadata:
+      labels:
+        app: mysql-auth
+    spec:
+      containers:
+        - name: mysql-auth
+          image: mysql:8.4
+          ports:
+            - containerPort: 3306
+          env:
+            - name: MYSQL_DATABASE
+              value: clinica_auth_db
+            - name: MYSQL_USER
+              value: clinica_auth_user
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: clinica-ms-secrets
+                  key: mysql-auth-password
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: clinica-ms-secrets
+                  key: mysql-auth-root-password
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - mysqladmin ping -h 127.0.0.1 -uroot -p"$MYSQL_ROOT_PASSWORD" --silent
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            failureThreshold: 30
+          volumeMounts:
+            - name: mysql-auth-data
+              mountPath: /var/lib/mysql
+      volumes:
+        - name: mysql-auth-data
+          persistentVolumeClaim:
+            claimName: mysql-auth-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-auth
+  namespace: clinica-ms
+spec:
+  selector:
+    app: mysql-auth
+  ports:
+    - port: 3306
+      targetPort: 3306
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-caja
+  namespace: clinica-ms
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql-caja
+  template:
+    metadata:
+      labels:
+        app: mysql-caja
+    spec:
+      containers:
+        - name: mysql-caja
+          image: mysql:8.4
+          ports:
+            - containerPort: 3306
+          env:
+            - name: MYSQL_DATABASE
+              value: clinica_caja_db
+            - name: MYSQL_USER
+              value: clinica_caja_user
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: clinica-ms-secrets
+                  key: mysql-caja-password
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: clinica-ms-secrets
+                  key: mysql-caja-root-password
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - mysqladmin ping -h 127.0.0.1 -uroot -p"$MYSQL_ROOT_PASSWORD" --silent
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            failureThreshold: 30
+          volumeMounts:
+            - name: mysql-caja-data
+              mountPath: /var/lib/mysql
+      volumes:
+        - name: mysql-caja-data
+          persistentVolumeClaim:
+            claimName: mysql-caja-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-caja
+  namespace: clinica-ms
+spec:
+  selector:
+    app: mysql-caja
+  ports:
+    - port: 3306
+      targetPort: 3306
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-atencion
+  namespace: clinica-ms
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres-atencion
+  template:
+    metadata:
+      labels:
+        app: postgres-atencion
+    spec:
+      containers:
+        - name: postgres-atencion
+          image: postgres:16-alpine
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: clinica_atencion_db
+            - name: POSTGRES_USER
+              value: clinica_atencion_user
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: clinica-ms-secrets
+                  key: postgres-atencion-password
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - pg_isready -U clinica_atencion_user -d clinica_atencion_db
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            failureThreshold: 20
+          volumeMounts:
+            - name: postgres-atencion-data
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: postgres-atencion-data
+          persistentVolumeClaim:
+            claimName: postgres-atencion-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-atencion
+  namespace: clinica-ms
+spec:
+  selector:
+    app: postgres-atencion
+  ports:
+    - port: 5432
+      targetPort: 5432
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-notificaciones
+  namespace: clinica-ms
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres-notificaciones
+  template:
+    metadata:
+      labels:
+        app: postgres-notificaciones
+    spec:
+      containers:
+        - name: postgres-notificaciones
+          image: postgres:16-alpine
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: clinica_notificaciones_db
+            - name: POSTGRES_USER
+              value: clinica_notificaciones_user
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: clinica-ms-secrets
+                  key: postgres-notificaciones-password
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - pg_isready -U clinica_notificaciones_user -d clinica_notificaciones_db
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            failureThreshold: 20
+          volumeMounts:
+            - name: postgres-notificaciones-data
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: postgres-notificaciones-data
+          persistentVolumeClaim:
+            claimName: postgres-notificaciones-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-notificaciones
+  namespace: clinica-ms
+spec:
+  selector:
+    app: postgres-notificaciones
+  ports:
+    - port: 5432
+      targetPort: 5432
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongo-citas
+  namespace: clinica-ms
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongo-citas
+  template:
+    metadata:
+      labels:
+        app: mongo-citas
+    spec:
+      containers:
+        - name: mongo-citas
+          image: mongo:7
+          ports:
+            - containerPort: 27017
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              value: clinica_citas_admin
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: clinica-ms-secrets
+                  key: mongo-citas-password
+            - name: MONGO_INITDB_DATABASE
+              value: clinica_citas_db
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - mongosh --quiet --eval 'db.adminCommand("ping").ok' -u clinica_citas_admin -p "$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin | grep 1
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            failureThreshold: 20
+          volumeMounts:
+            - name: mongo-citas-data
+              mountPath: /data/db
+      volumes:
+        - name: mongo-citas-data
+          persistentVolumeClaim:
+            claimName: mongo-citas-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo-citas
+  namespace: clinica-ms
+spec:
+  selector:
+    app: mongo-citas
+  ports:
+    - port: 27017
+      targetPort: 27017

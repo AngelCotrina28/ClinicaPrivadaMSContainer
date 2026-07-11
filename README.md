@@ -31,6 +31,7 @@ Clinica-Privada-Microservices-Container/
   Clinica-Caja-Facturacion-Service/
   Clinica-Notificaciones-Service/
   Clinica-Gateway-Service/
+  k8s/
   scripts/
   pom.xml
   docker-compose.microservices.yml
@@ -50,7 +51,7 @@ Bases de datos
    -> Gateway
 ```
 
-## Ejecucion local
+## Ejecucion local con Docker Compose
 
 Requisitos:
 
@@ -73,6 +74,44 @@ Eureka:        http://localhost:8761
 Gateway:       http://localhost:8090
 ```
 
+Para apagar Docker Compose:
+
+```powershell
+.\scripts\stop-microservices.ps1
+```
+
+## Ejecucion local con Kubernetes
+
+La carpeta `k8s/` contiene los manifiestos equivalentes al Compose, siguiendo el orden visto en clase:
+
+```text
+Namespace y configuracion
+   -> Bases de datos
+   -> Config Server
+   -> Eureka Server
+   -> Microservicios
+   -> Gateway
+```
+
+Antes de ejecutarlo, habilita Kubernetes en Docker Desktop:
+
+```text
+Docker Desktop -> Settings -> Kubernetes -> Enable Kubernetes
+```
+
+Luego ejecuta:
+
+```powershell
+.\scripts\start-k8s.ps1
+.\scripts\verify-k8s.ps1
+```
+
+Para apagar Kubernetes:
+
+```powershell
+.\scripts\stop-k8s.ps1
+```
+
 ## Variables de entorno
 
 Cada microservicio tiene su propio archivo `.env.example`.
@@ -87,4 +126,4 @@ Los archivos `.env` reales no se suben a GitHub porque contienen contrasenas y c
 - Cada microservicio usa su propia base de datos.
 - Config Server y Eureka Server no tienen base de datos porque son servicios de infraestructura.
 - El Gateway no guarda datos; solo enruta solicitudes.
-- Kubernetes se puede agregar despues en una carpeta `k8s/`.
+- Kubernetes esta documentado en la carpeta `k8s/`.

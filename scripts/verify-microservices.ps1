@@ -1,4 +1,11 @@
+param(
+    [string]$GatewayBaseUrl = "http://localhost:8090",
+    [switch]$SkipDirectHealth
+)
+
 $ErrorActionPreference = "Stop"
+
+$GatewayBaseUrl = $GatewayBaseUrl.TrimEnd("/")
 
 $adminUsername = if ($env:AUTH_ADMIN_USERNAME) { $env:AUTH_ADMIN_USERNAME } else { "admin" }
 $adminPassword = if ($env:AUTH_ADMIN_PASSWORD) { $env:AUTH_ADMIN_PASSWORD } else { "ClinicaAdminLocal123!" }
@@ -13,18 +20,22 @@ function Invoke-Health($name, $url) {
     }
 }
 
-Invoke-Health "Config Server" "http://localhost:8888/actuator/health"
-Invoke-Health "Eureka" "http://localhost:8761/actuator/health"
-Invoke-Health "Gateway" "http://localhost:8090/actuator/health"
-Invoke-Health "Auth" "http://localhost:8091/actuator/health"
-Invoke-Health "Notificaciones" "http://localhost:8092/actuator/health"
-Invoke-Health "Citas" "http://localhost:8093/actuator/health"
-Invoke-Health "Atencion Medica" "http://localhost:8094/actuator/health"
-Invoke-Health "Caja Facturacion" "http://localhost:8095/actuator/health"
+if ($SkipDirectHealth) {
+    Invoke-Health "Gateway" "$GatewayBaseUrl/actuator/health"
+} else {
+    Invoke-Health "Config Server" "http://localhost:8888/actuator/health"
+    Invoke-Health "Eureka" "http://localhost:8761/actuator/health"
+    Invoke-Health "Gateway" "$GatewayBaseUrl/actuator/health"
+    Invoke-Health "Auth" "http://localhost:8091/actuator/health"
+    Invoke-Health "Notificaciones" "http://localhost:8092/actuator/health"
+    Invoke-Health "Citas" "http://localhost:8093/actuator/health"
+    Invoke-Health "Atencion Medica" "http://localhost:8094/actuator/health"
+    Invoke-Health "Caja Facturacion" "http://localhost:8095/actuator/health"
+}
 
 $loginBody = @{ username = $adminUsername; password = $adminPassword } | ConvertTo-Json
 $login = Invoke-RestMethod `
-    -Uri "http://localhost:8090/api/auth/login" `
+    -Uri "$GatewayBaseUrl/api/auth/login" `
     -Method Post `
     -Body $loginBody `
     -ContentType "application/json" `
@@ -45,7 +56,7 @@ $notifBody = @{
 } | ConvertTo-Json
 
 $notificacion = Invoke-RestMethod `
-    -Uri "http://localhost:8090/api/notificaciones" `
+    -Uri "$GatewayBaseUrl/api/notificaciones" `
     -Method Post `
     -Body $notifBody `
     -ContentType "application/json" `
@@ -66,7 +77,7 @@ $citaBody = @{
 } | ConvertTo-Json
 
 $cita = Invoke-RestMethod `
-    -Uri "http://localhost:8090/api/citas" `
+    -Uri "$GatewayBaseUrl/api/citas" `
     -Method Post `
     -Body $citaBody `
     -ContentType "application/json" `
@@ -87,7 +98,7 @@ $atencionBody = @{
 } | ConvertTo-Json
 
 $atencion = Invoke-RestMethod `
-    -Uri "http://localhost:8090/api/atenciones" `
+    -Uri "$GatewayBaseUrl/api/atenciones" `
     -Method Post `
     -Body $atencionBody `
     -ContentType "application/json" `
@@ -102,7 +113,7 @@ $cerrarAtencionBody = @{
 } | ConvertTo-Json
 
 $atencionCerrada = Invoke-RestMethod `
-    -Uri "http://localhost:8090/api/atenciones/$($atencion.id)/cerrar" `
+    -Uri "$GatewayBaseUrl/api/atenciones/$($atencion.id)/cerrar" `
     -Method Patch `
     -Body $cerrarAtencionBody `
     -ContentType "application/json" `
@@ -120,7 +131,7 @@ $deudaBody = @{
 } | ConvertTo-Json
 
 $deuda = Invoke-RestMethod `
-    -Uri "http://localhost:8090/api/caja/deudas" `
+    -Uri "$GatewayBaseUrl/api/caja/deudas" `
     -Method Post `
     -Body $deudaBody `
     -ContentType "application/json" `
@@ -137,7 +148,7 @@ $pagoBody = @{
 } | ConvertTo-Json
 
 $pago = Invoke-RestMethod `
-    -Uri "http://localhost:8090/api/caja/pagos" `
+    -Uri "$GatewayBaseUrl/api/caja/pagos" `
     -Method Post `
     -Body $pagoBody `
     -ContentType "application/json" `
@@ -148,7 +159,7 @@ Write-Host "Pago registrado por Gateway: ID=$($pago.id) Comprobante=$($pago.nume
 
 try {
     Invoke-RestMethod `
-        -Uri "http://localhost:8090/api/citas" `
+        -Uri "$GatewayBaseUrl/api/citas" `
         -Method Post `
         -Body $citaBody `
         -ContentType "application/json" `
@@ -164,7 +175,7 @@ try {
 
 $cancelBody = @{ motivoCancelacion = "Prueba de microservicios" } | ConvertTo-Json
 $cancelada = Invoke-RestMethod `
-    -Uri "http://localhost:8090/api/citas/$($cita.id)/cancelar" `
+    -Uri "$GatewayBaseUrl/api/citas/$($cita.id)/cancelar" `
     -Method Patch `
     -Body $cancelBody `
     -ContentType "application/json" `

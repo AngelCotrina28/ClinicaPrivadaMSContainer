@@ -23,10 +23,14 @@ services:
       - key: BACKEND_URL
         sync: false
       - key: CITAS_ROUTE_ENABLED
-        value: "false"
+        value: "true"
       - key: ATENCION_ROUTE_ENABLED
-        value: "false"
+        value: "true"
       - key: CAJA_ROUTE_ENABLED
-        value: "false"
+        value: "true"
       - key: CORS_ALLOWED_ORIGINS
         sync: false
+      - key: SPRING_CLOUD_CONFIG_ENABLED
+        value: "false"
+      - key: EUREKA_CLIENT_ENABLED
+        value: "false"

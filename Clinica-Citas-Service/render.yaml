@@ -18,3 +18,7 @@ services:
         sync: false
       - key: SPRINGDOC_ENABLED
         value: "true"
+      - key: SPRING_CLOUD_CONFIG_ENABLED
+        value: "false"
+      - key: EUREKA_CLIENT_ENABLED
+        value: "false"

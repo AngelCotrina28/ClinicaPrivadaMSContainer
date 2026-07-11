@@ -24,6 +24,7 @@ spec:
               path: /actuator/health
               port: 8888
             initialDelaySeconds: 20
+            timeoutSeconds: 10
             periodSeconds: 10
             failureThreshold: 20
 ---
@@ -73,6 +74,7 @@ spec:
               path: /actuator/health
               port: 8761
             initialDelaySeconds: 35
+            timeoutSeconds: 10
             periodSeconds: 10
             failureThreshold: 20
 ---

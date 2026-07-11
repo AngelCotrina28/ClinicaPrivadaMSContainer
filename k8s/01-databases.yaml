@@ -65,6 +65,8 @@ metadata:
   namespace: clinica-ms
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: mysql-auth
@@ -100,6 +102,7 @@ spec:
                 - -c
                 - mysqladmin ping -h 127.0.0.1 -uroot -p"$MYSQL_ROOT_PASSWORD" --silent
             initialDelaySeconds: 60
+            timeoutSeconds: 10
             periodSeconds: 10
             failureThreshold: 30
           volumeMounts:
@@ -129,6 +132,8 @@ metadata:
   namespace: clinica-ms
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: mysql-caja
@@ -164,6 +169,7 @@ spec:
                 - -c
                 - mysqladmin ping -h 127.0.0.1 -uroot -p"$MYSQL_ROOT_PASSWORD" --silent
             initialDelaySeconds: 60
+            timeoutSeconds: 10
             periodSeconds: 10
             failureThreshold: 30
           volumeMounts:
@@ -193,6 +199,8 @@ metadata:
   namespace: clinica-ms
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: postgres-atencion
@@ -223,6 +231,7 @@ spec:
                 - -c
                 - pg_isready -U clinica_atencion_user -d clinica_atencion_db
             initialDelaySeconds: 15
+            timeoutSeconds: 10
             periodSeconds: 10
             failureThreshold: 20
           volumeMounts:
@@ -252,6 +261,8 @@ metadata:
   namespace: clinica-ms
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: postgres-notificaciones
@@ -282,6 +293,7 @@ spec:
                 - -c
                 - pg_isready -U clinica_notificaciones_user -d clinica_notificaciones_db
             initialDelaySeconds: 15
+            timeoutSeconds: 10
             periodSeconds: 10
             failureThreshold: 20
           volumeMounts:
@@ -311,6 +323,8 @@ metadata:
   namespace: clinica-ms
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: mongo-citas
@@ -341,6 +355,7 @@ spec:
                 - -c
                 - mongosh --quiet --eval 'db.adminCommand("ping").ok' -u clinica_citas_admin -p "$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin | grep 1
             initialDelaySeconds: 20
+            timeoutSeconds: 10
             periodSeconds: 10
             failureThreshold: 20
           volumeMounts:

@@ -103,6 +103,7 @@ Luego ejecuta:
 
 ```powershell
 .\scripts\start-k8s.ps1
+.\scripts\status-k8s.ps1
 .\scripts\verify-k8s.ps1
 ```
 

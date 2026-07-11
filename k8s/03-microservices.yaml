@@ -59,6 +59,7 @@ spec:
               path: /actuator/health
               port: 8091
             initialDelaySeconds: 45
+            timeoutSeconds: 10
             periodSeconds: 10
             failureThreshold: 20
 ---
@@ -130,6 +131,7 @@ spec:
               path: /actuator/health
               port: 8092
             initialDelaySeconds: 45
+            timeoutSeconds: 10
             periodSeconds: 10
             failureThreshold: 20
 ---
@@ -199,6 +201,7 @@ spec:
               path: /actuator/health
               port: 8093
             initialDelaySeconds: 45
+            timeoutSeconds: 10
             periodSeconds: 10
             failureThreshold: 20
 ---
@@ -270,6 +273,7 @@ spec:
               path: /actuator/health
               port: 8094
             initialDelaySeconds: 45
+            timeoutSeconds: 10
             periodSeconds: 10
             failureThreshold: 20
 ---
@@ -341,6 +345,7 @@ spec:
               path: /actuator/health
               port: 8095
             initialDelaySeconds: 45
+            timeoutSeconds: 10
             periodSeconds: 10
             failureThreshold: 20
 ---

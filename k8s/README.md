@@ -32,6 +32,22 @@ Docker Desktop -> Settings -> Kubernetes -> Enable Kubernetes
 
 El script valida el contexto `docker-desktop`, reutiliza o construye las imagenes locales `clinica-*:local`, aplica los manifiestos de `k8s/` y espera los deployments.
 
+El orden de despliegue replica la clase:
+
+```text
+Namespace/configuracion
+  -> Bases de datos
+  -> Config Server y Eureka Server
+  -> Microservicios
+  -> Gateway
+```
+
+## Ver estado sin probar flujo funcional
+
+```powershell
+.\scripts\status-k8s.ps1
+```
+
 ## Desplegar manualmente
 
 ```powershell

@@ -17,6 +17,16 @@ function Test-DockerImage($image) {
     return $LASTEXITCODE -eq 0
 }
 
+function Apply-Manifest($file) {
+    Write-Host "Aplicando $file..."
+    kubectl apply -f $file | Out-Host
+}
+
+function Wait-Deployment($deployment) {
+    Write-Host "Esperando deployment/$deployment..."
+    kubectl -n $Namespace rollout status "deployment/$deployment" --timeout=10m | Out-Host
+}
+
 if (-not (Test-CommandExists "kubectl")) {
     throw "No encuentro kubectl. Instala/habilita Kubernetes desde Docker Desktop."
 }
@@ -53,29 +63,45 @@ try {
         Write-Host "Imagenes locales encontradas. No se reconstruyen."
     }
 
-    Write-Host "Aplicando manifiestos Kubernetes..."
-    kubectl apply -f k8s/ | Out-Host
+    Write-Host "Aplicando manifiestos Kubernetes por etapas..."
 
-    $deployments = @(
+    Apply-Manifest "k8s/00-namespace-config.yaml"
+
+    Apply-Manifest "k8s/01-databases.yaml"
+    $databaseDeployments = @(
         "mysql-auth",
         "mysql-caja",
         "postgres-atencion",
         "postgres-notificaciones",
-        "mongo-citas",
+        "mongo-citas"
+    )
+    foreach ($deployment in $databaseDeployments) {
+        Wait-Deployment $deployment
+    }
+
+    Apply-Manifest "k8s/02-config-eureka.yaml"
+    $infrastructureDeployments = @(
         "config-server",
-        "eureka-server",
+        "eureka-server"
+    )
+    foreach ($deployment in $infrastructureDeployments) {
+        Wait-Deployment $deployment
+    }
+
+    Apply-Manifest "k8s/03-microservices.yaml"
+    $serviceDeployments = @(
         "auth-service",
         "notificaciones-service",
         "citas-service",
         "atencion-medica-service",
-        "caja-facturacion-service",
-        "gateway-service"
+        "caja-facturacion-service"
     )
-
-    foreach ($deployment in $deployments) {
-        Write-Host "Esperando deployment/$deployment..."
-        kubectl -n $Namespace rollout status "deployment/$deployment" --timeout=10m | Out-Host
+    foreach ($deployment in $serviceDeployments) {
+        Wait-Deployment $deployment
     }
+
+    Apply-Manifest "k8s/04-gateway.yaml"
+    Wait-Deployment "gateway-service"
 
     Write-Host "Kubernetes listo."
     Write-Host "Gateway: ejecuta scripts\verify-k8s.ps1 para validar el flujo por port-forward."

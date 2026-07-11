@@ -13,6 +13,9 @@ $portForward = $null
 
 Push-Location $root
 try {
+    Write-Host "Validando deployments listos antes de probar..."
+    kubectl -n $Namespace wait --for=condition=available deployment --all --timeout=10m | Out-Host
+
     Write-Host "Abriendo port-forward del Gateway en $gatewayBaseUrl..."
     $portForward = Start-Process `
         -FilePath "kubectl" `

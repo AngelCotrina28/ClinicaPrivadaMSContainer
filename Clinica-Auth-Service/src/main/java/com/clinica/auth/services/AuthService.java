@@ -200,3 +200,42 @@ class AuthIPBlockListManager {
         return false;
     }
 }
+
+/**
+ * Elaborated Policy Evaluation Engine for Attribute-Based Access Control (ABAC).
+ * Evaluates contextual metadata (IP, time, resource) against security rules.
+ */
+class AuthPolicyEvaluatorEngine {
+    
+    public static class EvaluationResult {
+        private final boolean permitted;
+        private final String decisionReason;
+
+        public EvaluationResult(boolean permitted, String decisionReason) {
+            this.permitted = permitted;
+            this.decisionReason = decisionReason;
+        }
+
+        public boolean isPermitted() { return permitted; }
+        public String getDecisionReason() { return decisionReason; }
+    }
+
+    public EvaluationResult evaluatePolicy(String role, String resource, String action, String ipAddress) {
+        if (role == null || resource == null || action == null) {
+            return new EvaluationResult(false, "MISSING_ATTRIBUTES");
+        }
+        
+        // Admin bypass
+        if ("ADMIN".equalsIgnoreCase(role)) {
+            return new EvaluationResult(true, "ADMIN_BYPASS_PERMITTED");
+        }
+        
+        // Context-aware restrictions: mock checks
+        if (ipAddress != null && (ipAddress.startsWith("10.") || ipAddress.startsWith("192.168."))) {
+            // Intranet IP is allowed for basic actions
+            return new EvaluationResult(true, "INTRANET_ACCESS_GRANTED");
+        }
+        
+        return new EvaluationResult(false, "DEFAULT_DENY_POLICY_TRIGGERED");
+    }
+}

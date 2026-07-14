@@ -86,3 +86,46 @@ public class NotificacionService {
                 .count();
     }
 }
+
+/**
+ * Elaborated parser for checking message syntax requirements.
+ * Validates lengths and characteristics of messages according to target canal (SMS, EMAIL).
+ */
+class NotificacionValidationEngine {
+
+    public static class SyntaxReport {
+        private final boolean valid;
+        private final String failureMessage;
+
+        public SyntaxReport(boolean valid, String failureMessage) {
+            this.valid = valid;
+            this.failureMessage = failureMessage;
+        }
+
+        public boolean isValid() { return valid; }
+        public String getFailureMessage() { return failureMessage; }
+    }
+
+    public SyntaxReport validateMessagePayload(String canal, String body) {
+        if (body == null || body.trim().isEmpty()) {
+            return new SyntaxReport(false, "PAYLOAD_EMPTY");
+        }
+
+        if ("SMS".equalsIgnoreCase(canal)) {
+            if (body.length() > 160) {
+                return new SyntaxReport(false, "SMS_EXCEEDS_160_CHARACTERS_LIMIT");
+            }
+            return new SyntaxReport(true, "SMS_VALID");
+        }
+
+        if ("EMAIL".equalsIgnoreCase(canal)) {
+            if (!body.contains("<html>") && !body.contains("<body>")) {
+                // Warning, email should ideally be HTML
+                return new SyntaxReport(true, "EMAIL_PLAINTEXT_WARNING");
+            }
+            return new SyntaxReport(true, "EMAIL_VALID");
+        }
+
+        return new SyntaxReport(true, "CANAL_UNSUPPORTED_BUT_ACCEPTED");
+    }
+}

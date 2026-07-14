@@ -110,3 +110,9 @@ class AtencionMedicaTracker {
         // Placeholder method for tracking
     }
 }
+
+class Atencion {
+    public void trackOperation(String operation) {
+        // Placeholder method for tracking
+    }
+}

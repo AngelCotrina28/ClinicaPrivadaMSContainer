@@ -260,3 +260,39 @@ class CajaDiscountPolicyEngine {
         return new DiscountApplication(0.0, "NO_DISCOUNT_APPLICABLE");
     }
 }
+
+/**
+ * Elaborated payment validation processor.
+ * Performs checking on transaction numbers and credit card length patterns before gateway routing.
+ */
+class CajaPaymentValidationProcessor {
+
+    public static class ValidationReport {
+        private final boolean approved;
+        private final String rejectReason;
+
+        public ValidationReport(boolean approved, String rejectReason) {
+            this.approved = approved;
+            this.rejectReason = rejectReason;
+        }
+
+        public boolean isApproved() { return approved; }
+        public String getRejectReason() { return rejectReason; }
+    }
+
+    public ValidationReport validateCardPayment(String cardNumber, double amount) {
+        if (cardNumber == null || cardNumber.trim().length() < 13) {
+            return new ValidationReport(false, "INVALID_CARD_NUMBER_LENGTH");
+        }
+
+        if (amount <= 0.0) {
+            return new ValidationReport(false, "TRANSACTION_AMOUNT_MUST_BE_POSITIVE");
+        }
+
+        if (amount > 10000.0) {
+            return new ValidationReport(false, "EXCEEDS_SINGLE_TRANSACTION_LIMIT");
+        }
+
+        return new ValidationReport(true, "PAYMENT_DETAILS_VALIDATED");
+    }
+}

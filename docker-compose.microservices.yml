@@ -271,9 +271,9 @@ services:
       ATENCION_SERVICE_URL: "http://atencion-medica-service:8094"
       CAJA_SERVICE_URL: "http://caja-facturacion-service:8095"
       BACKEND_URL: "http://host.docker.internal:8080"
-      CITAS_ROUTE_ENABLED: "true"
-      ATENCION_ROUTE_ENABLED: "true"
-      CAJA_ROUTE_ENABLED: "true"
+      CITAS_ROUTE_ENABLED: "false"
+      ATENCION_ROUTE_ENABLED: "false"
+      CAJA_ROUTE_ENABLED: "false"
       CORS_ALLOWED_ORIGINS: "http://localhost:4200,http://127.0.0.1:4200"
     ports:
       - "8090:8090"

@@ -56,7 +56,7 @@ $notifBody = @{
 } | ConvertTo-Json
 
 $notificacion = Invoke-RestMethod `
-    -Uri "$GatewayBaseUrl/api/notificaciones" `
+    -Uri "$GatewayBaseUrl/api/ms/notificaciones" `
     -Method Post `
     -Body $notifBody `
     -ContentType "application/json" `
@@ -77,7 +77,7 @@ $citaBody = @{
 } | ConvertTo-Json
 
 $cita = Invoke-RestMethod `
-    -Uri "$GatewayBaseUrl/api/citas" `
+    -Uri "$GatewayBaseUrl/api/ms/citas" `
     -Method Post `
     -Body $citaBody `
     -ContentType "application/json" `
@@ -98,7 +98,7 @@ $atencionBody = @{
 } | ConvertTo-Json
 
 $atencion = Invoke-RestMethod `
-    -Uri "$GatewayBaseUrl/api/atenciones" `
+    -Uri "$GatewayBaseUrl/api/ms/atenciones" `
     -Method Post `
     -Body $atencionBody `
     -ContentType "application/json" `
@@ -113,7 +113,7 @@ $cerrarAtencionBody = @{
 } | ConvertTo-Json
 
 $atencionCerrada = Invoke-RestMethod `
-    -Uri "$GatewayBaseUrl/api/atenciones/$($atencion.id)/cerrar" `
+    -Uri "$GatewayBaseUrl/api/ms/atenciones/$($atencion.id)/cerrar" `
     -Method Patch `
     -Body $cerrarAtencionBody `
     -ContentType "application/json" `
@@ -131,7 +131,7 @@ $deudaBody = @{
 } | ConvertTo-Json
 
 $deuda = Invoke-RestMethod `
-    -Uri "$GatewayBaseUrl/api/caja/deudas" `
+    -Uri "$GatewayBaseUrl/api/ms/caja/deudas" `
     -Method Post `
     -Body $deudaBody `
     -ContentType "application/json" `
@@ -148,7 +148,7 @@ $pagoBody = @{
 } | ConvertTo-Json
 
 $pago = Invoke-RestMethod `
-    -Uri "$GatewayBaseUrl/api/caja/pagos" `
+    -Uri "$GatewayBaseUrl/api/ms/caja/pagos" `
     -Method Post `
     -Body $pagoBody `
     -ContentType "application/json" `
@@ -159,7 +159,7 @@ Write-Host "Pago registrado por Gateway: ID=$($pago.id) Comprobante=$($pago.nume
 
 try {
     Invoke-RestMethod `
-        -Uri "$GatewayBaseUrl/api/citas" `
+        -Uri "$GatewayBaseUrl/api/ms/citas" `
         -Method Post `
         -Body $citaBody `
         -ContentType "application/json" `
@@ -175,7 +175,7 @@ try {
 
 $cancelBody = @{ motivoCancelacion = "Prueba de microservicios" } | ConvertTo-Json
 $cancelada = Invoke-RestMethod `
-    -Uri "$GatewayBaseUrl/api/citas/$($cita.id)/cancelar" `
+    -Uri "$GatewayBaseUrl/api/ms/citas/$($cita.id)/cancelar" `
     -Method Patch `
     -Body $cancelBody `
     -ContentType "application/json" `

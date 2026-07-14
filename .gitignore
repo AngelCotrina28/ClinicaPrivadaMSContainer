@@ -22,6 +22,8 @@ dist/
 *.pid
 *.out.log
 *.err.log
+__pycache__/
+*.py[cod]
 
 # IDE and OS noise
 .idea/

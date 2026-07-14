@@ -1,0 +1,210 @@
+{
+  "info": {
+    "_postman_id": "79b2fa16-6743-49f1-a6b2-261d5a4b1001",
+    "name": "Clinica Privada - Microservicios",
+    "description": "Flujo verificable a traves del API Gateway. Las rutas /api/ms acceden explicitamente a los microservicios de negocio durante la migracion gradual del backend.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      { "key": "token", "value": "{{token}}", "type": "string" }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "if (!pm.collectionVariables.get('testDate')) {",
+          "  const date = new Date();",
+          "  date.setUTCDate(date.getUTCDate() + 14);",
+          "  pm.collectionVariables.set('testDate', date.toISOString().slice(0, 10));",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    { "key": "token", "value": "" },
+    { "key": "testDate", "value": "" },
+    { "key": "medicoId", "value": "10" },
+    { "key": "pacienteId", "value": "1" },
+    { "key": "citaId", "value": "" },
+    { "key": "atencionId", "value": "" },
+    { "key": "deudaId", "value": "" },
+    { "key": "pagoId", "value": "" },
+    { "key": "notificacionId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "01 - Infraestructura",
+      "item": [
+        {
+          "name": "Gateway health",
+          "auth": { "type": "noauth" },
+          "request": { "method": "GET", "url": "{{baseUrl}}/actuator/health" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Gateway UP', () => {", "  pm.response.to.have.status(200);", "  pm.expect(pm.response.json().status).to.eql('UP');", "});"] } }]
+        },
+        {
+          "name": "Gateway routes",
+          "auth": { "type": "noauth" },
+          "request": { "method": "GET", "url": "{{baseUrl}}/gateway/routes" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Rutas publicadas', () => pm.response.to.have.status(200));"] } }]
+        }
+      ]
+    },
+    {
+      "name": "02 - Autenticacion",
+      "item": [
+        {
+          "name": "Login y guardar JWT",
+          "auth": { "type": "noauth" },
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}" },
+            "url": "{{baseUrl}}/api/auth/login"
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Login correcto', () => pm.response.to.have.status(200));", "const body = pm.response.json();", "pm.expect(body.token).to.be.a('string').and.not.empty;", "pm.collectionVariables.set('token', body.token);", "pm.collectionVariables.set('medicoId', String(10000 + (Date.now() % 80000)));", "pm.collectionVariables.set('pacienteId', String(10000 + (Date.now() % 70000)));", "const date = new Date();", "date.setUTCDate(date.getUTCDate() + 14);", "pm.collectionVariables.set('testDate', date.toISOString().slice(0, 10));"] } }]
+        },
+        {
+          "name": "Perfil autenticado",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/auth/me" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('JWT aceptado', () => pm.response.to.have.status(200));"] } }]
+        },
+        {
+          "name": "Listar roles",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/auth/roles" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Roles disponibles', () => pm.response.to.have.status(200));"] } }]
+        }
+      ]
+    },
+    {
+      "name": "03 - Citas Service - MongoDB",
+      "item": [
+        {
+          "name": "Crear cita",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"pacienteId\": {{pacienteId}},\n  \"medicoId\": {{medicoId}},\n  \"especialidadId\": 2,\n  \"fecha\": \"{{testDate}}\",\n  \"horaInicio\": \"10:00\",\n  \"horaFin\": \"10:30\",\n  \"consultorio\": \"Consultorio 201\",\n  \"motivo\": \"Consulta general - prueba Postman\"\n}" },
+            "url": "{{baseUrl}}/api/ms/citas"
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Cita creada', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));", "const body = pm.response.json();", "pm.collectionVariables.set('citaId', body.id);"] } }]
+        },
+        {
+          "name": "Consultar cita",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/ms/citas/{{citaId}}" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Cita encontrada', () => pm.response.to.have.status(200));"] } }]
+        },
+        {
+          "name": "Disponibilidad del medico",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/ms/citas/disponibilidad?medicoId={{medicoId}}&fecha={{testDate}}" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Disponibilidad consultada', () => pm.response.to.have.status(200));"] } }]
+        },
+        {
+          "name": "Citas del paciente",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/ms/citas/paciente/{{pacienteId}}" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Listado obtenido', () => pm.response.to.have.status(200));"] } }]
+        }
+      ]
+    },
+    {
+      "name": "04 - Atencion Medica Service - PostgreSQL",
+      "item": [
+        {
+          "name": "Registrar atencion",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"historiaClinicaId\": 1,\n  \"pacienteId\": {{pacienteId}},\n  \"medicoId\": {{medicoId}},\n  \"citaId\": \"{{citaId}}\",\n  \"motivoConsulta\": \"Dolor abdominal\",\n  \"diagnostico\": \"Gastritis probable\",\n  \"tratamiento\": \"Control dietario\",\n  \"indicacionesReceta\": \"Tomar medicamento despues de alimentos\"\n}" },
+            "url": "{{baseUrl}}/api/ms/atenciones"
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Atencion registrada', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));", "pm.collectionVariables.set('atencionId', pm.response.json().id);"] } }]
+        },
+        {
+          "name": "Consultar atencion",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/ms/atenciones/{{atencionId}}" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Atencion encontrada', () => pm.response.to.have.status(200));"] } }]
+        },
+        {
+          "name": "Cerrar atencion",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"tratamiento\": \"Tratamiento final registrado\",\n  \"indicacionesReceta\": \"Reposo y control en siete dias\"\n}" },
+            "url": "{{baseUrl}}/api/ms/atenciones/{{atencionId}}/cerrar"
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Atencion cerrada', () => pm.response.to.have.status(200));", "pm.expect(pm.response.json().estado).to.eql('CERRADA');"] } }]
+        }
+      ]
+    },
+    {
+      "name": "05 - Caja Facturacion Service - MySQL",
+      "item": [
+        {
+          "name": "Crear deuda",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"pacienteId\": {{pacienteId}},\n  \"concepto\": \"Consulta medica\",\n  \"referenciaTipo\": \"ATENCION\",\n  \"referenciaId\": \"{{atencionId}}\",\n  \"montoTotal\": 80.00\n}" },
+            "url": "{{baseUrl}}/api/ms/caja/deudas"
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Deuda creada', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));", "pm.collectionVariables.set('deudaId', pm.response.json().id);"] } }]
+        },
+        {
+          "name": "Registrar pago",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"deudaId\": {{deudaId}},\n  \"monto\": 80.00,\n  \"metodoPago\": \"EFECTIVO\",\n  \"observacion\": \"Pago de prueba Postman\"\n}" },
+            "url": "{{baseUrl}}/api/ms/caja/pagos"
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Pago registrado', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));", "pm.collectionVariables.set('pagoId', pm.response.json().id);"] } }]
+        },
+        {
+          "name": "Resumen de caja",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/ms/caja/resumen" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Resumen obtenido', () => pm.response.to.have.status(200));"] } }]
+        }
+      ]
+    },
+    {
+      "name": "06 - Notificaciones Service - PostgreSQL",
+      "item": [
+        {
+          "name": "Crear notificacion",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"destinatarioTipo\": \"PACIENTE\",\n  \"destinatarioId\": {{pacienteId}},\n  \"tipo\": \"PAGO\",\n  \"canal\": \"APP\",\n  \"titulo\": \"Pago confirmado\",\n  \"mensaje\": \"El pago fue registrado correctamente.\",\n  \"referenciaTipo\": \"PAGO\",\n  \"referenciaId\": {{pagoId}}\n}" },
+            "url": "{{baseUrl}}/api/ms/notificaciones"
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Notificacion creada', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));", "pm.collectionVariables.set('notificacionId', pm.response.json().id);"] } }]
+        },
+        {
+          "name": "Marcar notificacion como leida",
+          "request": { "method": "PATCH", "url": "{{baseUrl}}/api/ms/notificaciones/{{notificacionId}}/leida" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Notificacion leida', () => pm.response.to.have.status(200));"] } }]
+        }
+      ]
+    },
+    {
+      "name": "07 - Cerrar flujo",
+      "item": [
+        {
+          "name": "Cancelar cita de prueba",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"motivoCancelacion\": \"Fin de la prueba Postman\"\n}" },
+            "url": "{{baseUrl}}/api/ms/citas/{{citaId}}/cancelar"
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Cita cancelada', () => pm.response.to.have.status(200));", "pm.expect(pm.response.json().estado).to.eql('CANCELADA');"] } }]
+        }
+      ]
+    }
+  ]
+}

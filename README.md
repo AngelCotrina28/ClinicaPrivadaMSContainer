@@ -31,7 +31,9 @@ Clinica-Privada-Microservices-Container/
   Clinica-Caja-Facturacion-Service/
   Clinica-Notificaciones-Service/
   Clinica-Gateway-Service/
+  database/
   k8s/
+  postman/
   scripts/
   pom.xml
   docker-compose.microservices.yml
@@ -73,6 +75,19 @@ Config Server: http://localhost:8888/clinica-gateway-service/default
 Eureka:        http://localhost:8761
 Gateway:       http://localhost:8090
 ```
+
+El Gateway publica dos tipos de rutas:
+
+```text
+/api/ms/citas/**       -> Citas Service
+/api/ms/atenciones/**  -> Atencion Medica Service
+/api/ms/caja/**        -> Caja Facturacion Service
+/api/ms/notificaciones/** -> Notificaciones Service
+/api/**                -> rutas principales y compatibilidad con el backend original
+```
+
+El prefijo `/api/ms` permite probar directamente los microservicios nuevos sin
+romper las rutas heredadas que el frontend todavia utiliza durante la migracion.
 
 Para apagar Docker Compose:
 
@@ -118,6 +133,13 @@ Para apagar Kubernetes:
 Cada microservicio tiene su propio archivo `.env.example`.
 
 Los archivos `.env` reales no se suben a GitHub porque contienen contrasenas y configuracion local.
+
+## Esquemas y pruebas API
+
+- `database/` contiene los esquemas y datos de ejemplo para MySQL, PostgreSQL y MongoDB.
+- `postman/` contiene la coleccion completa y ambientes para ejecucion local y Render.
+- `docs/` contiene el informe editable, el PDF y los diagramas arquitectonicos.
+- `scripts/verify-microservices.ps1` ejecuta el mismo flujo principal desde PowerShell.
 
 ## Notas
 

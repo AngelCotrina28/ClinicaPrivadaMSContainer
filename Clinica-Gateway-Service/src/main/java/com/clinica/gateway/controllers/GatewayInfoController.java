@@ -16,16 +16,20 @@ public class GatewayInfoController {
     @GetMapping("/gateway/routes")
     public ResponseEntity<?> routes() {
         return ResponseEntity.ok(Map.of(
+                "explicitMicroservicePrefix", "/api/ms",
                 "auth", properties.getAuthServiceUrl() + "/api/auth/**",
                 "notificaciones", properties.getNotificacionesServiceUrl() + "/api/notificaciones/**",
                 "citas", Map.of(
                         "enabled", properties.isCitasRouteEnabled(),
+                        "explicitPath", "/api/ms/citas/**",
                         "target", properties.getCitasServiceUrl() + "/api/citas/**"),
                 "atenciones", Map.of(
                         "enabled", properties.isAtencionRouteEnabled(),
+                        "explicitPath", "/api/ms/atenciones/**",
                         "target", properties.getAtencionServiceUrl() + "/api/atenciones/**"),
                 "caja", Map.of(
                         "enabled", properties.isCajaRouteEnabled(),
+                        "explicitPath", "/api/ms/caja/**",
                         "target", properties.getCajaServiceUrl() + "/api/caja/**"),
                 "backendFallback", properties.getBackendUrl() + "/api/**"));
     }

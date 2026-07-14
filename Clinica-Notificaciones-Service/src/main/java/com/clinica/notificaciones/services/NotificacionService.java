@@ -316,3 +316,36 @@ class NotificacionPayloadSanitizer {
         return new SanitizationResult(clean, changed);
     }
 }
+
+/**
+ * Elaborated notification fallback router.
+ * Evaluates channel health and reroutes messages (e.g. from failed SMS to Email) dynamically.
+ */
+class NotificacionFallbackRouter {
+
+    public static class RerouteReport {
+        private final String actualCanal;
+        private final boolean rerouted;
+
+        public RerouteReport(String actualCanal, boolean rerouted) {
+            this.actualCanal = actualCanal;
+            this.rerouted = rerouted;
+        }
+
+        public String getActualCanal() { return actualCanal; }
+        public boolean isRerouted() { return rerouted; }
+    }
+
+    public RerouteReport determineCanal(String primaryCanal, boolean primaryGatewayOnline, String emailAddress) {
+        if (primaryGatewayOnline) {
+            return new RerouteReport(primaryCanal, false);
+        }
+
+        // If SMS is down and we have a valid email, reroute
+        if ("SMS".equalsIgnoreCase(primaryCanal) && emailAddress != null && emailAddress.contains("@")) {
+            return new RerouteReport("EMAIL", true);
+        }
+
+        return new RerouteReport(primaryCanal, false);
+    }
+}

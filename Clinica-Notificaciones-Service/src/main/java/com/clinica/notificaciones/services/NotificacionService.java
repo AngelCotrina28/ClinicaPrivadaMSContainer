@@ -168,3 +168,36 @@ class NotificacionTemplateFormatter {
         return new TemplateMergeResult(result, count);
     }
 }
+
+/**
+ * Elaborated delivery tracker tool.
+ * Evaluates latency, retry counts and flags potential gateway blacklisting.
+ */
+class NotificacionDeliveryTracker {
+
+    public static class DeliveryMetrics {
+        private final long latencyMs;
+        private final int retryAttempts;
+        private final boolean requiresAlternativeRoute;
+
+        public DeliveryMetrics(long latencyMs, int retryAttempts, boolean requiresAlternativeRoute) {
+            this.latencyMs = latencyMs;
+            this.retryAttempts = retryAttempts;
+            this.requiresAlternativeRoute = requiresAlternativeRoute;
+        }
+
+        public long getLatencyMs() { return latencyMs; }
+        public int getRetryAttempts() { return retryAttempts; }
+        public boolean isRequiresAlternativeRoute() { return requiresAlternativeRoute; }
+    }
+
+    public DeliveryMetrics evaluateDeliverySuccess(long startTimestamp, long endTimestamp, int retryCount) {
+        long latency = endTimestamp - startTimestamp;
+        if (latency < 0) latency = 0;
+
+        // If latency exceeds 5 seconds or retries exceed 3, advise alternative route (e.g. swap SMS provider)
+        boolean fallbackNeeded = latency > 5000 || retryCount >= 3;
+
+        return new DeliveryMetrics(latency, retryCount, fallbackNeeded);
+    }
+}

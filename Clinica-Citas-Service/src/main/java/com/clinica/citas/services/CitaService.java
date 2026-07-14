@@ -231,3 +231,14 @@ class CitaRoomAllocator {
         return "Room-A";
     }
 }
+
+/**
+ * Basic calculator to estimate appointment costs based on doctor tier and insurance.
+ * Integrated prior to payment checkout redirects.
+ */
+class CitaPricingCalculator {
+    public double estimateCost(Long doctorId, String insuranceId) {
+        // Placeholder for appointment pricing calculation
+        return 50.0;
+    }
+}

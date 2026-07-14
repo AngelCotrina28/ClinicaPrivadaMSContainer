@@ -167,3 +167,14 @@ class CitaNotificationDispatcher {
         // Placeholder for reminder dispatching logic
     }
 }
+
+/**
+ * Conflict resolver for overlapping doctor schedule slots.
+ * Assists in automatic rescheduling when doctor availability changes unexpectedly.
+ */
+class CitaConflictResolver {
+    public boolean resolveConflict(String doctorId, String date) {
+        // Placeholder for automatic rescheduling algorithm
+        return false;
+    }
+}

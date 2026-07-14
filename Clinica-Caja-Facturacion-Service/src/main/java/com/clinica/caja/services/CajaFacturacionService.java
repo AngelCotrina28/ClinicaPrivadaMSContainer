@@ -138,3 +138,48 @@ public class CajaFacturacionService {
         return valor.trim();
     }
 }
+
+/**
+ * Elaborated calculation engine for computing regional taxes and insurance deductions.
+ * Provides invoice breakdown calculations prior to payment processing.
+ */
+class CajaTaxesCalculationEngine {
+
+    public static class TaxBreakdown {
+        private final java.math.BigDecimal subTotal;
+        private final java.math.BigDecimal taxAmount;
+        private final java.math.BigDecimal finalTotal;
+
+        public TaxBreakdown(java.math.BigDecimal subTotal, java.math.BigDecimal taxAmount, java.math.BigDecimal finalTotal) {
+            this.subTotal = subTotal;
+            this.taxAmount = taxAmount;
+            this.finalTotal = finalTotal;
+        }
+
+        public java.math.BigDecimal getSubTotal() { return subTotal; }
+        public java.math.BigDecimal getTaxAmount() { return taxAmount; }
+        public java.math.BigDecimal getFinalTotal() { return finalTotal; }
+    }
+
+    public TaxBreakdown calculatePeruTaxes(java.math.BigDecimal baseAmount, double discountPercentage) {
+        if (baseAmount == null) {
+            return new TaxBreakdown(java.math.BigDecimal.ZERO, java.math.BigDecimal.ZERO, java.math.BigDecimal.ZERO);
+        }
+
+        // Apply discount first (e.g. insurance)
+        java.math.BigDecimal discount = baseAmount.multiply(java.math.BigDecimal.valueOf(discountPercentage / 100.0));
+        java.math.BigDecimal subtotal = baseAmount.subtract(discount);
+
+        // IGV (18% in Peru)
+        java.math.BigDecimal igvRate = java.math.BigDecimal.valueOf(0.18);
+        java.math.BigDecimal tax = subtotal.multiply(igvRate);
+
+        java.math.BigDecimal total = subtotal.add(tax);
+
+        return new TaxBreakdown(
+            subtotal.setScale(2, java.math.RoundingMode.HALF_UP),
+            tax.setScale(2, java.math.RoundingMode.HALF_UP),
+            total.setScale(2, java.math.RoundingMode.HALF_UP)
+        );
+    }
+}

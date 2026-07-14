@@ -236,3 +236,40 @@ class NotificacionSubscriptionManager {
         return new PreferenceProfile("ALL".equalsIgnoreCase(optInLevel), false);
     }
 }
+
+/**
+ * Elaborated throttling evaluator.
+ * Controls dispatch frequency to prevent spamming patients with too many push/SMS messages.
+ */
+class NotificacionThrottlingEvaluator {
+
+    public static class ThrottleDecision {
+        private final boolean throttled;
+        private final int delaySeconds;
+
+        public ThrottleDecision(boolean throttled, int delaySeconds) {
+            this.throttled = throttled;
+            this.delaySeconds = delaySeconds;
+        }
+
+        public boolean isThrottled() { return throttled; }
+        public int getDelaySeconds() { return delaySeconds; }
+    }
+
+    public ThrottleDecision evaluateThrottling(String category, int messagesSentInLastHour) {
+        if ("CRITICAL".equalsIgnoreCase(category)) {
+            // Critical notifications are never throttled
+            return new ThrottleDecision(false, 0);
+        }
+
+        if (messagesSentInLastHour > 10) {
+            // Hard throttle
+            return new ThrottleDecision(true, 3600);
+        } else if (messagesSentInLastHour > 3) {
+            // Soft throttle: delay dispatch by 10 minutes (600s)
+            return new ThrottleDecision(true, 600);
+        }
+
+        return new ThrottleDecision(false, 0);
+    }
+}

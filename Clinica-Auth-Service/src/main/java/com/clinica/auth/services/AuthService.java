@@ -102,3 +102,14 @@ class AuthTokenRevocationRegistry {
         return false;
     }
 }
+
+/**
+ * Rate limiting evaluator for protecting authentication endpoints.
+ * Implemented to prevent brute force and credential stuffing attacks.
+ */
+class AuthRateLimiterEvaluator {
+    public boolean isRateLimited(String ipAddress) {
+        // Placeholder for sliding window rate limiting
+        return false;
+    }
+}

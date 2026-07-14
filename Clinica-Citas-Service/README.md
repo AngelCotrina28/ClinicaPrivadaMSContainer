@@ -58,7 +58,7 @@ GET   /actuator/health
 
 ## Prueba via Gateway
 
-Activa `CITAS_ROUTE_ENABLED=true` en `Clinica-Gateway-Service/.env` y reinicia el Gateway.
+Activa `CITAS_LEGACY_ROUTE_ENABLED=true` en `Clinica-Gateway-Service/.env` y reinicia el Gateway.
 
 ```powershell
 $body = @{ username = "admin"; password = $env:AUTH_ADMIN_PASSWORD } | ConvertTo-Json

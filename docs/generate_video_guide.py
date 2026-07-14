@@ -730,7 +730,7 @@ return properties.getBackendUrl() + path;''')
         "Revisar los cambios de Frontend y Microservices Container.",
         "Crear commits separados y hacer push a main.",
         "Verificar que Render redeploye Gateway y servicios afectados.",
-        "Confirmar en Render que CITAS_ROUTE_ENABLED, ATENCION_ROUTE_ENABLED y CAJA_ROUTE_ENABLED esten en false para compatibilidad del frontend; las pruebas nuevas usan /api/ms.",
+        "Las rutas heredadas usan CITAS_LEGACY_ROUTE_ENABLED, ATENCION_LEGACY_ROUTE_ENABLED y CAJA_LEGACY_ROUTE_ENABLED en false para compatibilidad del frontend; las pruebas nuevas usan /api/ms.",
         "Esperar el redeploy de Vercel y revisar Network en el navegador.",
         "Ejecutar la coleccion Postman contra Render.",
         "Levantar Kubernetes limpio, ejecutar status-k8s.ps1 y verify-k8s.ps1.",

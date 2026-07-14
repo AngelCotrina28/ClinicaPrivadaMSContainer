@@ -33,9 +33,9 @@ Backend monolitico:   http://localhost:8080
 ```text
 /api/auth/**             -> Auth Service
 /api/notificaciones/**   -> Notificaciones Service
-/api/citas/**            -> Citas Service cuando CITAS_ROUTE_ENABLED=true
-/api/atenciones/**       -> Atencion Medica Service cuando ATENCION_ROUTE_ENABLED=true
-/api/caja/**             -> Caja Facturacion Service cuando CAJA_ROUTE_ENABLED=true
+/api/citas/**            -> Citas Service cuando CITAS_LEGACY_ROUTE_ENABLED=true
+/api/atenciones/**       -> Atencion Medica Service cuando ATENCION_LEGACY_ROUTE_ENABLED=true
+/api/caja/**             -> Caja Facturacion Service cuando CAJA_LEGACY_ROUTE_ENABLED=true
 /api/**                  -> Backend monolitico como fallback
 ```
 

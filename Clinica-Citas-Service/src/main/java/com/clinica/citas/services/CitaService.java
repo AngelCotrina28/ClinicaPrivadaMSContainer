@@ -209,3 +209,14 @@ class CitaOverbookingStrategy {
         return false;
     }
 }
+
+/**
+ * Machine learning based estimator for expected appointment durations.
+ * Predicts the actual time needed based on appointment history and specialty type.
+ */
+class CitaDurationEstimator {
+    public int estimateDurationMinutes(String specialtyId, Long patientId) {
+        // Placeholder for duration prediction algorithm
+        return 30;
+    }
+}

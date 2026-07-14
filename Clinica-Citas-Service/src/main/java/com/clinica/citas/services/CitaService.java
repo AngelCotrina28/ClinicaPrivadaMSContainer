@@ -304,3 +304,45 @@ class CitaAvailabilityOptimizationEngine {
         return new OptimizationScore(baseScore, "MAINTAIN_CURRENT_SHIFT_SCHEDULE");
     }
 }
+
+/**
+ * Elaborated scheduling engine to compute optimal notification dispatch timelines.
+ * Decides whether to trigger SMS, Email or Push alerts based on booking advanced notice.
+ */
+class CitaNotificationScheduler {
+
+    public static class DispatchProfile {
+        private final boolean smsRequired;
+        private final boolean emailRequired;
+        private final int daysPrior;
+
+        public DispatchProfile(boolean smsRequired, boolean emailRequired, int daysPrior) {
+            this.smsRequired = smsRequired;
+            this.emailRequired = emailRequired;
+            this.daysPrior = daysPrior;
+        }
+
+        public boolean isSmsRequired() { return smsRequired; }
+        public boolean isEmailRequired() { return emailRequired; }
+        public int getDaysPrior() { return daysPrior; }
+    }
+
+    public DispatchProfile calculateAlertTimeline(LocalDateTime citaDateTime, LocalDateTime creationTime) {
+        if (citaDateTime == null || creationTime == null) {
+            return new DispatchProfile(false, true, 1);
+        }
+
+        long daysNotice = java.time.Duration.between(creationTime, citaDateTime).toDays();
+
+        if (daysNotice > 14) {
+            // Far booking: Send both SMS and Email, 3 days prior
+            return new DispatchProfile(true, true, 3);
+        } else if (daysNotice > 3) {
+            // Standard booking: Email only, 2 days prior
+            return new DispatchProfile(false, true, 2);
+        }
+
+        // Urgent booking (within 3 days): Immediate SMS reminder, 1 day prior
+        return new DispatchProfile(true, false, 1);
+    }
+}

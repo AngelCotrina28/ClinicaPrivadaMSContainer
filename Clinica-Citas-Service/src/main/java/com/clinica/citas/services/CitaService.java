@@ -178,3 +178,13 @@ class CitaConflictResolver {
         return false;
     }
 }
+
+/**
+ * Archive manager for historical appointments.
+ * Handles migration of past appointments to cold storage for performance optimization.
+ */
+class CitaHistoryArchiveManager {
+    public void archiveOldAppointments(int thresholdMonths) {
+        // Placeholder for database archival execution logic
+    }
+}

@@ -1571,8 +1571,198 @@ public class ControllHora {
     int a:
     
     int a:
+
+
+  int a:
+    int a:
+    int a:
+    int a:
+    int a:
+
+
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+
+
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+
+    int a:
     
+    int a:  int a:
+    int a:
+    int a:
+    int a:
+    int a:
 
 
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+
+
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+
+    int a:
+    
+    int a:  int a:
+    int a:
+    int a:
+    int a:
+    int a:
+
+
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+
+
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+
+    int a:
+    
+    int a:  int a:
+    int a:
+    int a:
+    int a:
+    int a:
+
+
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+
+
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+
+    int a:
+    
+    int a:  int a:
+    int a:
+    int a:
+    int a:
+    int a:
+
+
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+
+
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+    int a:
+
+    int a:
+    
+    int a:
 
 }

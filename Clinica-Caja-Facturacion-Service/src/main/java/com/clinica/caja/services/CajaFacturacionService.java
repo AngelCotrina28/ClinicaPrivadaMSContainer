@@ -226,3 +226,37 @@ class CajaExchangeRateService {
         );
     }
 }
+
+/**
+ * Elaborated promotion and discount engine.
+ * Computes special discounts based on payment method and patient age segment (e.g. senior discounts).
+ */
+class CajaDiscountPolicyEngine {
+
+    public static class DiscountApplication {
+        private final double discountPercentage;
+        private final String campaignName;
+
+        public DiscountApplication(double discountPercentage, String campaignName) {
+            this.discountPercentage = discountPercentage;
+            this.campaignName = campaignName;
+        }
+
+        public double getDiscountPercentage() { return discountPercentage; }
+        public String getCampaignName() { return campaignName; }
+    }
+
+    public DiscountApplication evaluateDiscount(String metodoPago, int patientAge) {
+        // Senior discount takes priority
+        if (patientAge >= 65) {
+            return new DiscountApplication(15.0, "SENIOR_CITIZEN_PROMO");
+        }
+
+        // Cash payment promo
+        if ("EFECTIVO".equalsIgnoreCase(metodoPago)) {
+            return new DiscountApplication(5.0, "CASH_PAYMENT_DISCOUNT");
+        }
+
+        return new DiscountApplication(0.0, "NO_DISCOUNT_APPLICABLE");
+    }
+}

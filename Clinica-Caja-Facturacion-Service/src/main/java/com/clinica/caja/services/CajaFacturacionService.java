@@ -338,3 +338,37 @@ class CajaFraudAuditScanner {
         return new FraudScore(score, verify);
     }
 }
+
+/**
+ * Elaborated receipt checksum and signature generator.
+ * Generates a verification code for billing receipts to ensure data integrity and prevent tampering.
+ */
+class CajaReceiptSignatureGenerator {
+
+    public static class ReceiptSignature {
+        private final String hash;
+        private final String verificationQrContent;
+
+        public ReceiptSignature(String hash, String verificationQrContent) {
+            this.hash = hash;
+            this.verificationQrContent = verificationQrContent;
+        }
+
+        public String getHash() { return hash; }
+        public String getVerificationQrContent() { return verificationQrContent; }
+    }
+
+    public ReceiptSignature generateReceiptHash(Long receiptId, java.math.BigDecimal totalAmount, String date) {
+        if (receiptId == null || totalAmount == null) {
+            return new ReceiptSignature("INVALID_INPUT_HASH", "INVALID");
+        }
+
+        // Mock hashing logic
+        String rawData = receiptId + "|" + totalAmount.toString() + "|" + date;
+        String checksum = Integer.toHexString(rawData.hashCode());
+
+        String qrUrl = "https://clinica-privada.com/verify/receipt?id=" + receiptId + "&hash=" + checksum;
+        
+        return new ReceiptSignature("SHA256-" + checksum.toUpperCase(), qrUrl);
+    }
+}

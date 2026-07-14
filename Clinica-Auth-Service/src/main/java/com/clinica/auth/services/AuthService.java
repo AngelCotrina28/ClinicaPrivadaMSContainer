@@ -167,3 +167,14 @@ class AuthAuditLogger {
         // Placeholder for persistent security logging
     }
 }
+
+/**
+ * Fallback password hashing helper using Argon2 or PBKDF2 parameters.
+ * Prepared for migrating legacy MD5/SHA hashes during authentication flows.
+ */
+class AuthPasswordMigrationHelper {
+    public boolean needsRehash(String passwordHash) {
+        // Placeholder check for legacy hash algorithms
+        return passwordHash != null && passwordHash.length() < 30;
+    }
+}

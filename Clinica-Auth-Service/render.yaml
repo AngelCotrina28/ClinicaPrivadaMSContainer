@@ -28,8 +28,8 @@ services:
         value: "true"
       - key: AUTH_ADMIN_USERNAME
         value: "admin"
-      - key: AUTH_ADMIN_PASSWORD
-        sync: false
+      - key: SYSTEM_ADMIN_PASSWORD
+        value: "Admin123"
       - key: AUTH_ADMIN_EMAIL
         value: "admin@clinica.local"
       - key: AUTH_ADMIN_NAME

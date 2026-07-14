@@ -39,7 +39,7 @@ spec:
                 secretKeyRef:
                   name: clinica-ms-secrets
                   key: mysql-auth-password
-            - name: AUTH_ADMIN_PASSWORD
+            - name: SYSTEM_ADMIN_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: clinica-ms-secrets

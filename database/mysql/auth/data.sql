@@ -11,4 +11,4 @@ ON DUPLICATE KEY UPDATE
   activo = VALUES(activo);
 
 -- AuthSeedService creates the administrator with a BCrypt hash obtained from
--- AUTH_ADMIN_PASSWORD. No plain-text password is versioned here.
+-- SYSTEM_ADMIN_PASSWORD. No plain-text password is versioned here.

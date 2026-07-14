@@ -39,7 +39,6 @@ public class ProxyService {
             "authorization",
             "content-type",
             "accept",
-            "origin",
             "x-requested-with");
 
     private static final Set<String> RESPONSE_HEADERS_PERMITIDOS = Set.of(

@@ -49,27 +49,47 @@ public class AuthSeedService implements CommandLineRunner {
         List<Rol> roles = List.of(
                 rol("ADMINISTRADOR", "Gestiona usuarios, roles y configuracion del sistema."),
                 rol("RECEPCIONISTA", "Gestiona admision y citas."),
+                rol("JEFE_ENFERMERIA", "Supervisa admision e historias clinicas."),
+                rol("ENFERMERO", "Gestiona historias clinicas y emergencias."),
                 rol("MEDICO", "Gestiona atenciones medicas."),
-                rol("FARMACIA", "Gestiona recetas e inventario."),
+                rol("TECNICO_FARMACIA", "Gestiona recetas e inventario."),
                 rol("CAJERO", "Gestiona pagos, comprobantes y caja."));
 
         roles.forEach(this::crearRolSiNoExiste);
+        sincronizarAdministrador();
+    }
 
-        if (usuarioRepository.count() == 0) {
-            Rol adminRol = rolRepository.findByNombreIgnoreCase("ADMINISTRADOR")
-                    .orElseThrow(() -> new IllegalStateException("No se pudo crear el rol administrador."));
+    private void sincronizarAdministrador() {
+        Rol adminRol = rolRepository.findByNombreIgnoreCase("ADMINISTRADOR")
+                .orElseThrow(() -> new IllegalStateException("No se pudo crear el rol administrador."));
 
-            Usuario admin = Usuario.builder()
-                    .username(adminUsername.trim())
-                    .email(adminEmail.trim())
-                    .nombreCompleto(adminName.trim())
-                    .passwordHash(passwordEncoder.encode(adminPassword))
-                    .rol(adminRol)
-                    .activo(true)
-                    .build();
+        Usuario admin = usuarioRepository.findByUsernameIgnoreCase(adminUsername.trim())
+                .orElseGet(() -> Usuario.builder()
+                        .username(adminUsername.trim())
+                        .build());
 
-            usuarioRepository.save(admin);
-            logger.info("Usuario administrador inicial creado: {}", admin.getUsername());
+        admin.setEmail(adminEmail.trim());
+        admin.setNombreCompleto(adminName.trim());
+        admin.setRol(adminRol);
+        admin.setActivo(true);
+
+        if (!passwordCoincide(adminPassword, admin.getPasswordHash())) {
+            admin.setPasswordHash(passwordEncoder.encode(adminPassword));
+        }
+
+        boolean nuevo = admin.getId() == null;
+        usuarioRepository.save(admin);
+        logger.info("Usuario administrador {}: {}", nuevo ? "creado" : "sincronizado", admin.getUsername());
+    }
+
+    private boolean passwordCoincide(String password, String passwordHash) {
+        if (passwordHash == null || passwordHash.isBlank()) {
+            return false;
+        }
+        try {
+            return passwordEncoder.matches(password, passwordHash);
+        } catch (IllegalArgumentException exception) {
+            return false;
         }
     }
 

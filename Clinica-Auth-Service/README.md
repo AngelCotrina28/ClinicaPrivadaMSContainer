@@ -41,7 +41,7 @@ Si la BD esta vacia y `AUTH_SEED_ENABLED=true`, crea:
 
 ```text
 username: admin
-password: valor configurado en AUTH_ADMIN_PASSWORD
+password: valor configurado en SYSTEM_ADMIN_PASSWORD
 rol: ADMINISTRADOR
 ```
 
@@ -59,7 +59,7 @@ GET  /actuator/health
 ## Prueba rapida
 
 ```powershell
-$body = @{ username = "admin"; password = $env:AUTH_ADMIN_PASSWORD } | ConvertTo-Json
+$body = @{ username = "admin"; password = $env:SYSTEM_ADMIN_PASSWORD } | ConvertTo-Json
 $login = Invoke-RestMethod -Uri "http://localhost:8091/api/auth/login" -Method Post -Body $body -ContentType "application/json"
 $login.token
 ```

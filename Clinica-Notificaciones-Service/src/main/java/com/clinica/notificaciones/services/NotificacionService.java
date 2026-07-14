@@ -86,3 +86,266 @@ public class NotificacionService {
                 .count();
     }
 }
+
+/**
+ * Elaborated parser for checking message syntax requirements.
+ * Validates lengths and characteristics of messages according to target canal (SMS, EMAIL).
+ */
+class NotificacionValidationEngine {
+
+    public static class SyntaxReport {
+        private final boolean valid;
+        private final String failureMessage;
+
+        public SyntaxReport(boolean valid, String failureMessage) {
+            this.valid = valid;
+            this.failureMessage = failureMessage;
+        }
+
+        public boolean isValid() { return valid; }
+        public String getFailureMessage() { return failureMessage; }
+    }
+
+    public SyntaxReport validateMessagePayload(String canal, String body) {
+        if (body == null || body.trim().isEmpty()) {
+            return new SyntaxReport(false, "PAYLOAD_EMPTY");
+        }
+
+        if ("SMS".equalsIgnoreCase(canal)) {
+            if (body.length() > 160) {
+                return new SyntaxReport(false, "SMS_EXCEEDS_160_CHARACTERS_LIMIT");
+            }
+            return new SyntaxReport(true, "SMS_VALID");
+        }
+
+        if ("EMAIL".equalsIgnoreCase(canal)) {
+            if (!body.contains("<html>") && !body.contains("<body>")) {
+                // Warning, email should ideally be HTML
+                return new SyntaxReport(true, "EMAIL_PLAINTEXT_WARNING");
+            }
+            return new SyntaxReport(true, "EMAIL_VALID");
+        }
+
+        return new SyntaxReport(true, "CANAL_UNSUPPORTED_BUT_ACCEPTED");
+    }
+}
+
+/**
+ * Elaborated template formatter engine.
+ * Merges raw notification templates with user dynamic metadata (e.g. name, date).
+ */
+class NotificacionTemplateFormatter {
+
+    public static class TemplateMergeResult {
+        private final String mergedBody;
+        private final int placeholdersFilled;
+
+        public TemplateMergeResult(String mergedBody, int placeholdersFilled) {
+            this.mergedBody = mergedBody;
+            this.placeholdersFilled = placeholdersFilled;
+        }
+
+        public String getMergedBody() { return mergedBody; }
+        public int getPlaceholdersFilled() { return placeholdersFilled; }
+    }
+
+    public TemplateMergeResult formatTemplate(String template, String userName, String actionDetails) {
+        if (template == null) {
+            return new TemplateMergeResult("", 0);
+        }
+
+        int count = 0;
+        String result = template;
+        if (userName != null && result.contains("{{USER_NAME}}")) {
+            result = result.replace("{{USER_NAME}}", userName);
+            count++;
+        }
+        if (actionDetails != null && result.contains("{{ACTION_DETAILS}}")) {
+            result = result.replace("{{ACTION_DETAILS}}", actionDetails);
+            count++;
+        }
+
+        return new TemplateMergeResult(result, count);
+    }
+}
+
+/**
+ * Elaborated delivery tracker tool.
+ * Evaluates latency, retry counts and flags potential gateway blacklisting.
+ */
+class NotificacionDeliveryTracker {
+
+    public static class DeliveryMetrics {
+        private final long latencyMs;
+        private final int retryAttempts;
+        private final boolean requiresAlternativeRoute;
+
+        public DeliveryMetrics(long latencyMs, int retryAttempts, boolean requiresAlternativeRoute) {
+            this.latencyMs = latencyMs;
+            this.retryAttempts = retryAttempts;
+            this.requiresAlternativeRoute = requiresAlternativeRoute;
+        }
+
+        public long getLatencyMs() { return latencyMs; }
+        public int getRetryAttempts() { return retryAttempts; }
+        public boolean isRequiresAlternativeRoute() { return requiresAlternativeRoute; }
+    }
+
+    public DeliveryMetrics evaluateDeliverySuccess(long startTimestamp, long endTimestamp, int retryCount) {
+        long latency = endTimestamp - startTimestamp;
+        if (latency < 0) latency = 0;
+
+        // If latency exceeds 5 seconds or retries exceed 3, advise alternative route (e.g. swap SMS provider)
+        boolean fallbackNeeded = latency > 5000 || retryCount >= 3;
+
+        return new DeliveryMetrics(latency, retryCount, fallbackNeeded);
+    }
+}
+
+/**
+ * Elaborated notification subscription manager.
+ * Evaluates patient channels opt-in status and preferences for different notification categories.
+ */
+class NotificacionSubscriptionManager {
+
+    public static class PreferenceProfile {
+        private final boolean promotionsAllowed;
+        private final boolean criticalAlertsOnly;
+
+        public PreferenceProfile(boolean promotionsAllowed, boolean criticalAlertsOnly) {
+            this.promotionsAllowed = promotionsAllowed;
+            this.criticalAlertsOnly = criticalAlertsOnly;
+        }
+
+        public boolean isPromotionsAllowed() { return promotionsAllowed; }
+        public boolean isCriticalAlertsOnly() { return criticalAlertsOnly; }
+    }
+
+    public PreferenceProfile evaluatePreferences(String optInLevel, String patientType) {
+        if ("NONE".equalsIgnoreCase(optInLevel)) {
+            // Patient opted out of all notifications (strictly critical only)
+            return new PreferenceProfile(false, true);
+        }
+
+        if ("VIP".equalsIgnoreCase(patientType)) {
+            // VIP patients allow all updates
+            return new PreferenceProfile(true, false);
+        }
+
+        // Default: Allow standard updates, but not promotions if opt-in is basic
+        return new PreferenceProfile("ALL".equalsIgnoreCase(optInLevel), false);
+    }
+}
+
+/**
+ * Elaborated throttling evaluator.
+ * Controls dispatch frequency to prevent spamming patients with too many push/SMS messages.
+ */
+class NotificacionThrottlingEvaluator {
+
+    public static class ThrottleDecision {
+        private final boolean throttled;
+        private final int delaySeconds;
+
+        public ThrottleDecision(boolean throttled, int delaySeconds) {
+            this.throttled = throttled;
+            this.delaySeconds = delaySeconds;
+        }
+
+        public boolean isThrottled() { return throttled; }
+        public int getDelaySeconds() { return delaySeconds; }
+    }
+
+    public ThrottleDecision evaluateThrottling(String category, int messagesSentInLastHour) {
+        if ("CRITICAL".equalsIgnoreCase(category)) {
+            // Critical notifications are never throttled
+            return new ThrottleDecision(false, 0);
+        }
+
+        if (messagesSentInLastHour > 10) {
+            // Hard throttle
+            return new ThrottleDecision(true, 3600);
+        } else if (messagesSentInLastHour > 3) {
+            // Soft throttle: delay dispatch by 10 minutes (600s)
+            return new ThrottleDecision(true, 600);
+        }
+
+        return new ThrottleDecision(false, 0);
+    }
+}
+
+/**
+ * Elaborated notification payload sanitizer.
+ * Sanitizes input message templates and content blocks to prevent XSS injection attacks.
+ */
+class NotificacionPayloadSanitizer {
+
+    public static class SanitizationResult {
+        private final String cleanText;
+        private final boolean modificationsMade;
+
+        public SanitizationResult(String cleanText, boolean modificationsMade) {
+            this.cleanText = cleanText;
+            this.modificationsMade = modificationsMade;
+        }
+
+        public String getCleanText() { return cleanText; }
+        public boolean isModificationsMade() { return modificationsMade; }
+    }
+
+    public SanitizationResult sanitizeTextContent(String rawText) {
+        if (rawText == null) {
+            return new SanitizationResult("", false);
+        }
+
+        // Basic XSS check
+        String clean = rawText;
+        boolean changed = false;
+        
+        if (clean.contains("<script>")) {
+            clean = clean.replace("<script>", "[BLOCKED_SCRIPT]");
+            clean = clean.replace("</script>", "");
+            changed = true;
+        }
+
+        if (clean.contains("javascript:")) {
+            clean = clean.replace("javascript:", "blocked-javascript:");
+            changed = true;
+        }
+
+        return new SanitizationResult(clean, changed);
+    }
+}
+
+/**
+ * Elaborated notification fallback router.
+ * Evaluates channel health and reroutes messages (e.g. from failed SMS to Email) dynamically.
+ */
+class NotificacionFallbackRouter {
+
+    public static class RerouteReport {
+        private final String actualCanal;
+        private final boolean rerouted;
+
+        public RerouteReport(String actualCanal, boolean rerouted) {
+            this.actualCanal = actualCanal;
+            this.rerouted = rerouted;
+        }
+
+        public String getActualCanal() { return actualCanal; }
+        public boolean isRerouted() { return rerouted; }
+    }
+
+    public RerouteReport determineCanal(String primaryCanal, boolean primaryGatewayOnline, String emailAddress) {
+        if (primaryGatewayOnline) {
+            return new RerouteReport(primaryCanal, false);
+        }
+
+        // If SMS is down and we have a valid email, reroute
+        if ("SMS".equalsIgnoreCase(primaryCanal) && emailAddress != null && emailAddress.contains("@")) {
+            return new RerouteReport("EMAIL", true);
+        }
+
+        return new RerouteReport(primaryCanal, false);
+    }
+}

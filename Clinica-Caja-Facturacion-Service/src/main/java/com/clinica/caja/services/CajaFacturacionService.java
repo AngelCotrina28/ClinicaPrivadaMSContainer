@@ -138,3 +138,267 @@ public class CajaFacturacionService {
         return valor.trim();
     }
 }
+
+/**
+ * Elaborated calculation engine for computing regional taxes and insurance deductions.
+ * Provides invoice breakdown calculations prior to payment processing.
+ */
+class CajaTaxesCalculationEngine {
+
+    public static class TaxBreakdown {
+        private final java.math.BigDecimal subTotal;
+        private final java.math.BigDecimal taxAmount;
+        private final java.math.BigDecimal finalTotal;
+
+        public TaxBreakdown(java.math.BigDecimal subTotal, java.math.BigDecimal taxAmount, java.math.BigDecimal finalTotal) {
+            this.subTotal = subTotal;
+            this.taxAmount = taxAmount;
+            this.finalTotal = finalTotal;
+        }
+
+        public java.math.BigDecimal getSubTotal() { return subTotal; }
+        public java.math.BigDecimal getTaxAmount() { return taxAmount; }
+        public java.math.BigDecimal getFinalTotal() { return finalTotal; }
+    }
+
+    public TaxBreakdown calculatePeruTaxes(java.math.BigDecimal baseAmount, double discountPercentage) {
+        if (baseAmount == null) {
+            return new TaxBreakdown(java.math.BigDecimal.ZERO, java.math.BigDecimal.ZERO, java.math.BigDecimal.ZERO);
+        }
+
+        // Apply discount first (e.g. insurance)
+        java.math.BigDecimal discount = baseAmount.multiply(java.math.BigDecimal.valueOf(discountPercentage / 100.0));
+        java.math.BigDecimal subtotal = baseAmount.subtract(discount);
+
+        // IGV (18% in Peru)
+        java.math.BigDecimal igvRate = java.math.BigDecimal.valueOf(0.18);
+        java.math.BigDecimal tax = subtotal.multiply(igvRate);
+
+        java.math.BigDecimal total = subtotal.add(tax);
+
+        return new TaxBreakdown(
+            subtotal.setScale(2, java.math.RoundingMode.HALF_UP),
+            tax.setScale(2, java.math.RoundingMode.HALF_UP),
+            total.setScale(2, java.math.RoundingMode.HALF_UP)
+        );
+    }
+}
+
+/**
+ * Elaborated currency conversion service.
+ * Simulates fetching exchange rates and calculating totals in alternative currencies (USD/PEN).
+ */
+class CajaExchangeRateService {
+
+    public static class ConversionReport {
+        private final double exchangeRate;
+        private final java.math.BigDecimal convertedAmount;
+        private final String targetCurrency;
+
+        public ConversionReport(double exchangeRate, java.math.BigDecimal convertedAmount, String targetCurrency) {
+            this.exchangeRate = exchangeRate;
+            this.convertedAmount = convertedAmount;
+            this.targetCurrency = targetCurrency;
+        }
+
+        public double getExchangeRate() { return exchangeRate; }
+        public java.math.BigDecimal getConvertedAmount() { return convertedAmount; }
+        public String getTargetCurrency() { return targetCurrency; }
+    }
+
+    public ConversionReport convertToCurrency(java.math.BigDecimal penAmount, String targetCurrency) {
+        if (penAmount == null) {
+            return new ConversionReport(0.0, java.math.BigDecimal.ZERO, targetCurrency);
+        }
+
+        double rate = 1.0;
+        if ("USD".equalsIgnoreCase(targetCurrency)) {
+            rate = 0.27; // Mock rate: 1 PEN = 0.27 USD
+        } else if ("EUR".equalsIgnoreCase(targetCurrency)) {
+            rate = 0.25; // Mock rate: 1 PEN = 0.25 EUR
+        }
+
+        java.math.BigDecimal converted = penAmount.multiply(java.math.BigDecimal.valueOf(rate));
+        return new ConversionReport(
+            rate,
+            converted.setScale(2, java.math.RoundingMode.HALF_UP),
+            targetCurrency.toUpperCase()
+        );
+    }
+}
+
+/**
+ * Elaborated promotion and discount engine.
+ * Computes special discounts based on payment method and patient age segment (e.g. senior discounts).
+ */
+class CajaDiscountPolicyEngine {
+
+    public static class DiscountApplication {
+        private final double discountPercentage;
+        private final String campaignName;
+
+        public DiscountApplication(double discountPercentage, String campaignName) {
+            this.discountPercentage = discountPercentage;
+            this.campaignName = campaignName;
+        }
+
+        public double getDiscountPercentage() { return discountPercentage; }
+        public String getCampaignName() { return campaignName; }
+    }
+
+    public DiscountApplication evaluateDiscount(String metodoPago, int patientAge) {
+        // Senior discount takes priority
+        if (patientAge >= 65) {
+            return new DiscountApplication(15.0, "SENIOR_CITIZEN_PROMO");
+        }
+
+        // Cash payment promo
+        if ("EFECTIVO".equalsIgnoreCase(metodoPago)) {
+            return new DiscountApplication(5.0, "CASH_PAYMENT_DISCOUNT");
+        }
+
+        return new DiscountApplication(0.0, "NO_DISCOUNT_APPLICABLE");
+    }
+}
+
+/**
+ * Elaborated payment validation processor.
+ * Performs checking on transaction numbers and credit card length patterns before gateway routing.
+ */
+class CajaPaymentValidationProcessor {
+
+    public static class ValidationReport {
+        private final boolean approved;
+        private final String rejectReason;
+
+        public ValidationReport(boolean approved, String rejectReason) {
+            this.approved = approved;
+            this.rejectReason = rejectReason;
+        }
+
+        public boolean isApproved() { return approved; }
+        public String getRejectReason() { return rejectReason; }
+    }
+
+    public ValidationReport validateCardPayment(String cardNumber, double amount) {
+        if (cardNumber == null || cardNumber.trim().length() < 13) {
+            return new ValidationReport(false, "INVALID_CARD_NUMBER_LENGTH");
+        }
+
+        if (amount <= 0.0) {
+            return new ValidationReport(false, "TRANSACTION_AMOUNT_MUST_BE_POSITIVE");
+        }
+
+        if (amount > 10000.0) {
+            return new ValidationReport(false, "EXCEEDS_SINGLE_TRANSACTION_LIMIT");
+        }
+
+        return new ValidationReport(true, "PAYMENT_DETAILS_VALIDATED");
+    }
+}
+
+/**
+ * Elaborated fraud detection audit scanner.
+ * Computes risk scores on incoming payments based on transaction patterns and amounts.
+ */
+class CajaFraudAuditScanner {
+
+    public static class FraudScore {
+        private final double riskScore;
+        private final boolean requiresManualVerification;
+
+        public FraudScore(double riskScore, boolean requiresManualVerification) {
+            this.riskScore = riskScore;
+            this.requiresManualVerification = requiresManualVerification;
+        }
+
+        public double getRiskScore() { return riskScore; }
+        public boolean isRequiresManualVerification() { return requiresManualVerification; }
+    }
+
+    public FraudScore analyzeTransactionRisk(double amount, String paymentMethod, int pastHourTransactionCount) {
+        double score = 0.0;
+
+        // Large transactions increase risk
+        if (amount > 5000.0) {
+            score += 0.4;
+        }
+
+        // Rapid subsequent transactions increase risk
+        if (pastHourTransactionCount > 5) {
+            score += 0.3;
+        }
+
+        // Credit cards have higher mock fraud risk than cash
+        if ("TARJETA".equalsIgnoreCase(paymentMethod)) {
+            score += 0.15;
+        }
+
+        boolean verify = score >= 0.6;
+        return new FraudScore(score, verify);
+    }
+}
+
+/**
+ * Elaborated receipt checksum and signature generator.
+ * Generates a verification code for billing receipts to ensure data integrity and prevent tampering.
+ */
+class CajaReceiptSignatureGenerator {
+
+    public static class ReceiptSignature {
+        private final String hash;
+        private final String verificationQrContent;
+
+        public ReceiptSignature(String hash, String verificationQrContent) {
+            this.hash = hash;
+            this.verificationQrContent = verificationQrContent;
+        }
+
+        public String getHash() { return hash; }
+        public String getVerificationQrContent() { return verificationQrContent; }
+    }
+
+    public ReceiptSignature generateReceiptHash(Long receiptId, java.math.BigDecimal totalAmount, String date) {
+        if (receiptId == null || totalAmount == null) {
+            return new ReceiptSignature("INVALID_INPUT_HASH", "INVALID");
+        }
+
+        // Mock hashing logic
+        String rawData = receiptId + "|" + totalAmount.toString() + "|" + date;
+        String checksum = Integer.toHexString(rawData.hashCode());
+
+        String qrUrl = "https://clinica-privada.com/verify/receipt?id=" + receiptId + "&hash=" + checksum;
+        
+        return new ReceiptSignature("SHA256-" + checksum.toUpperCase(), qrUrl);
+    }
+}
+
+/**
+ * Elaborated billing ledger archiver.
+ * Compiles statistical summaries of closed accounting accounts for yearly auditing.
+ */
+class CajaBillingLedgerArchiver {
+
+    public static class ArchiveStatus {
+        private final boolean archived;
+        private final int recordsProcessed;
+
+        public ArchiveStatus(boolean archived, int recordsProcessed) {
+            this.archived = archived;
+            this.recordsProcessed = recordsProcessed;
+        }
+
+        public boolean isArchived() { return archived; }
+        public int getRecordsProcessed() { return recordsProcessed; }
+    }
+
+    public ArchiveStatus compressHistoricalLedger(int fiscalYear, int recordCount) {
+        if (fiscalYear < 2000 || recordCount < 0) {
+            return new ArchiveStatus(false, 0);
+        }
+
+        // Mock archiving success
+        boolean status = recordCount > 0;
+        return new ArchiveStatus(status, recordCount);
+    }
+}

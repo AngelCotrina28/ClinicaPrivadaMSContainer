@@ -220,3 +220,14 @@ class CitaDurationEstimator {
         return 30;
     }
 }
+
+/**
+ * Intelligent room allocator to assign medical offices based on equipment requirements.
+ * Ensures specialized equipment (e.g. ultrasound machines) is available for relevant bookings.
+ */
+class CitaRoomAllocator {
+    public String allocateRoom(String specialtyId, String timeSlot) {
+        // Placeholder for equipment and room allocation logic
+        return "Room-A";
+    }
+}

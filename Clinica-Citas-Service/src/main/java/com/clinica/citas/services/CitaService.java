@@ -198,3 +198,14 @@ class CitaWaitlistManager {
         // Placeholder for waitlist queuing logic
     }
 }
+
+/**
+ * Strategy to manage calculated overbooking to mitigate patient no-shows.
+ * Analyzes historical cancellation rates to safely allow double-booking.
+ */
+class CitaOverbookingStrategy {
+    public boolean allowOverbooking(Long doctorId, String date) {
+        // Placeholder for statistical calculation of no-show probability
+        return false;
+    }
+}

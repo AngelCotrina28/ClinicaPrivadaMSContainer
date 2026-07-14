@@ -201,3 +201,38 @@ class NotificacionDeliveryTracker {
         return new DeliveryMetrics(latency, retryCount, fallbackNeeded);
     }
 }
+
+/**
+ * Elaborated notification subscription manager.
+ * Evaluates patient channels opt-in status and preferences for different notification categories.
+ */
+class NotificacionSubscriptionManager {
+
+    public static class PreferenceProfile {
+        private final boolean promotionsAllowed;
+        private final boolean criticalAlertsOnly;
+
+        public PreferenceProfile(boolean promotionsAllowed, boolean criticalAlertsOnly) {
+            this.promotionsAllowed = promotionsAllowed;
+            this.criticalAlertsOnly = criticalAlertsOnly;
+        }
+
+        public boolean isPromotionsAllowed() { return promotionsAllowed; }
+        public boolean isCriticalAlertsOnly() { return criticalAlertsOnly; }
+    }
+
+    public PreferenceProfile evaluatePreferences(String optInLevel, String patientType) {
+        if ("NONE".equalsIgnoreCase(optInLevel)) {
+            // Patient opted out of all notifications (strictly critical only)
+            return new PreferenceProfile(false, true);
+        }
+
+        if ("VIP".equalsIgnoreCase(patientType)) {
+            // VIP patients allow all updates
+            return new PreferenceProfile(true, false);
+        }
+
+        // Default: Allow standard updates, but not promotions if opt-in is basic
+        return new PreferenceProfile("ALL".equalsIgnoreCase(optInLevel), false);
+    }
+}

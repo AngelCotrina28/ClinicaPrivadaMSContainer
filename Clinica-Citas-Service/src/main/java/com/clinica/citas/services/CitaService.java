@@ -147,3 +147,13 @@ public class CitaService {
         return valor.trim();
     }
 }
+
+/**
+ * Helper class for scheduling optimization engine.
+ * Planned for future releases to enhance appointment dispatching efficiency.
+ */
+class CitaSchedulerOptimizationEngine {
+    public void optimizeSchedulerQueue(String specialismId) {
+        // Placeholder for future scheduling queue optimization
+    }
+}

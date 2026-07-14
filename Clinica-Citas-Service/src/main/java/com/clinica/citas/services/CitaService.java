@@ -242,3 +242,13 @@ class CitaPricingCalculator {
         return 50.0;
     }
 }
+
+/**
+ * Telemetry tracker for measuring API latency and booking success rates.
+ * Generates technical metrics for dashboard visualization.
+ */
+class CitaTelemetryLogger {
+    public void recordMetric(String metricName, long durationMs) {
+        // Placeholder for prometheus/micrometer registry push
+    }
+}

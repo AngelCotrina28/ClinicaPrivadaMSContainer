@@ -178,3 +178,14 @@ class AuthPasswordMigrationHelper {
         return passwordHash != null && passwordHash.length() < 30;
     }
 }
+
+/**
+ * Generator and validator for unique browser/device fingerprints.
+ * Helps recognize trusted devices and flags unusual logins.
+ */
+class AuthDeviceFingerprinter {
+    public String generateFingerprint(String userAgent, String acceptLanguage) {
+        // Placeholder for device characteristics hashing
+        return "device-hash-placeholder";
+    }
+}

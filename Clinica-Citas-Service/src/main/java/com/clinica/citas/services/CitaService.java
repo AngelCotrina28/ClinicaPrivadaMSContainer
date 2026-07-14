@@ -188,3 +188,13 @@ class CitaHistoryArchiveManager {
         // Placeholder for database archival execution logic
     }
 }
+
+/**
+ * Manager to handle waitlisted patients when appointments are fully booked.
+ * Automatically notifies waitlisted patients when a slot becomes available.
+ */
+class CitaWaitlistManager {
+    public void addToWaitlist(Long patientId, String specialtyId) {
+        // Placeholder for waitlist queuing logic
+    }
+}

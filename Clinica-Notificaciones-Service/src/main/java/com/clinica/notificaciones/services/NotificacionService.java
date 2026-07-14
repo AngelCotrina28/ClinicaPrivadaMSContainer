@@ -129,3 +129,42 @@ class NotificacionValidationEngine {
         return new SyntaxReport(true, "CANAL_UNSUPPORTED_BUT_ACCEPTED");
     }
 }
+
+/**
+ * Elaborated template formatter engine.
+ * Merges raw notification templates with user dynamic metadata (e.g. name, date).
+ */
+class NotificacionTemplateFormatter {
+
+    public static class TemplateMergeResult {
+        private final String mergedBody;
+        private final int placeholdersFilled;
+
+        public TemplateMergeResult(String mergedBody, int placeholdersFilled) {
+            this.mergedBody = mergedBody;
+            this.placeholdersFilled = placeholdersFilled;
+        }
+
+        public String getMergedBody() { return mergedBody; }
+        public int getPlaceholdersFilled() { return placeholdersFilled; }
+    }
+
+    public TemplateMergeResult formatTemplate(String template, String userName, String actionDetails) {
+        if (template == null) {
+            return new TemplateMergeResult("", 0);
+        }
+
+        int count = 0;
+        String result = template;
+        if (userName != null && result.contains("{{USER_NAME}}")) {
+            result = result.replace("{{USER_NAME}}", userName);
+            count++;
+        }
+        if (actionDetails != null && result.contains("{{ACTION_DETAILS}}")) {
+            result = result.replace("{{ACTION_DETAILS}}", actionDetails);
+            count++;
+        }
+
+        return new TemplateMergeResult(result, count);
+    }
+}

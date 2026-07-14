@@ -239,3 +239,50 @@ class AuthPolicyEvaluatorEngine {
         return new EvaluationResult(false, "DEFAULT_DENY_POLICY_TRIGGERED");
     }
 }
+
+/**
+ * Elaborated analyzer to compute password complexity using Shannon Entropy estimation.
+ * Helps evaluate credentials quality beyond basic length constraints.
+ */
+class AuthPasswordEntropyCalculator {
+
+    public static class EntropyDetails {
+        private final double bitsOfEntropy;
+        private final String strengthCategory;
+
+        public EntropyDetails(double bitsOfEntropy, String strengthCategory) {
+            this.bitsOfEntropy = bitsOfEntropy;
+            this.strengthCategory = strengthCategory;
+        }
+
+        public double getBitsOfEntropy() { return bitsOfEntropy; }
+        public String getStrengthCategory() { return strengthCategory; }
+    }
+
+    public EntropyDetails calculateEntropy(String password) {
+        if (password == null || password.isEmpty()) {
+            return new EntropyDetails(0.0, "EMPTY");
+        }
+
+        int poolSize = 0;
+        if (password.matches(".*[a-z].*")) poolSize += 26;
+        if (password.matches(".*[A-Z].*")) poolSize += 26;
+        if (password.matches(".*[0-9].*")) poolSize += 10;
+        if (password.matches(".*[^a-zA-Z0-9].*")) poolSize += 32;
+
+        if (poolSize == 0) poolSize = 1;
+
+        double entropy = password.length() * (Math.log(poolSize) / Math.log(2));
+
+        String category;
+        if (entropy < 40) {
+            category = "WEAK";
+        } else if (entropy < 80) {
+            category = "MEDIUM";
+        } else {
+            category = "STRONG";
+        }
+
+        return new EntropyDetails(entropy, category);
+    }
+}

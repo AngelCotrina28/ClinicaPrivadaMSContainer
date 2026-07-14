@@ -263,3 +263,44 @@ class CitaRecurrencePatternAnalyzer {
         return true;
     }
 }
+
+/**
+ * Elaborated optimization engine to analyze doctor availability scores.
+ * Suggests shifts adjustment based on season and historical demand metrics.
+ */
+class CitaAvailabilityOptimizationEngine {
+
+    public static class OptimizationScore {
+        private final double score;
+        private final String recommendation;
+
+        public OptimizationScore(double score, String recommendation) {
+            this.score = score;
+            this.recommendation = recommendation;
+        }
+
+        public double getScore() { return score; }
+        public String getRecommendation() { return recommendation; }
+    }
+
+    public OptimizationScore calculateOptimalShift(Long doctorId, int targetMonth, int pastCitationsCount) {
+        if (doctorId == null || pastCitationsCount < 0) {
+            return new OptimizationScore(0.0, "INSUFFICIENT_DATA");
+        }
+
+        // Higher demand in winter/flu seasons
+        double baseScore = 0.5;
+        if (targetMonth == 6 || targetMonth == 7 || targetMonth == 12) {
+            baseScore += 0.3; // High demand seasons
+        }
+
+        // Adjust based on doctor load history
+        if (pastCitationsCount > 50) {
+            return new OptimizationScore(baseScore + 0.15, "SUGGEST_EXPAND_SHIFTS_BY_20_PERCENT");
+        } else if (pastCitationsCount < 10) {
+            return new OptimizationScore(baseScore - 0.2, "SUGGEST_REDUCE_SHIFTS_BY_10_PERCENT");
+        }
+
+        return new OptimizationScore(baseScore, "MAINTAIN_CURRENT_SHIFT_SCHEDULE");
+    }
+}

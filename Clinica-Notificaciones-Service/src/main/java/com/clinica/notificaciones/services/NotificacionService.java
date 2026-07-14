@@ -273,3 +273,46 @@ class NotificacionThrottlingEvaluator {
         return new ThrottleDecision(false, 0);
     }
 }
+
+/**
+ * Elaborated notification payload sanitizer.
+ * Sanitizes input message templates and content blocks to prevent XSS injection attacks.
+ */
+class NotificacionPayloadSanitizer {
+
+    public static class SanitizationResult {
+        private final String cleanText;
+        private final boolean modificationsMade;
+
+        public SanitizationResult(String cleanText, boolean modificationsMade) {
+            this.cleanText = cleanText;
+            this.modificationsMade = modificationsMade;
+        }
+
+        public String getCleanText() { return cleanText; }
+        public boolean isModificationsMade() { return modificationsMade; }
+    }
+
+    public SanitizationResult sanitizeTextContent(String rawText) {
+        if (rawText == null) {
+            return new SanitizationResult("", false);
+        }
+
+        // Basic XSS check
+        String clean = rawText;
+        boolean changed = false;
+        
+        if (clean.contains("<script>")) {
+            clean = clean.replace("<script>", "[BLOCKED_SCRIPT]");
+            clean = clean.replace("</script>", "");
+            changed = true;
+        }
+
+        if (clean.contains("javascript:")) {
+            clean = clean.replace("javascript:", "blocked-javascript:");
+            changed = true;
+        }
+
+        return new SanitizationResult(clean, changed);
+    }
+}

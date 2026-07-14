@@ -296,3 +296,45 @@ class CajaPaymentValidationProcessor {
         return new ValidationReport(true, "PAYMENT_DETAILS_VALIDATED");
     }
 }
+
+/**
+ * Elaborated fraud detection audit scanner.
+ * Computes risk scores on incoming payments based on transaction patterns and amounts.
+ */
+class CajaFraudAuditScanner {
+
+    public static class FraudScore {
+        private final double riskScore;
+        private final boolean requiresManualVerification;
+
+        public FraudScore(double riskScore, boolean requiresManualVerification) {
+            this.riskScore = riskScore;
+            this.requiresManualVerification = requiresManualVerification;
+        }
+
+        public double getRiskScore() { return riskScore; }
+        public boolean isRequiresManualVerification() { return requiresManualVerification; }
+    }
+
+    public FraudScore analyzeTransactionRisk(double amount, String paymentMethod, int pastHourTransactionCount) {
+        double score = 0.0;
+
+        // Large transactions increase risk
+        if (amount > 5000.0) {
+            score += 0.4;
+        }
+
+        // Rapid subsequent transactions increase risk
+        if (pastHourTransactionCount > 5) {
+            score += 0.3;
+        }
+
+        // Credit cards have higher mock fraud risk than cash
+        if ("TARJETA".equalsIgnoreCase(paymentMethod)) {
+            score += 0.15;
+        }
+
+        boolean verify = score >= 0.6;
+        return new FraudScore(score, verify);
+    }
+}

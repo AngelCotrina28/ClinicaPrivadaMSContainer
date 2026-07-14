@@ -99,11 +99,13 @@ public class AtencionMedicaService {
     }
 }
 
-/**
- * Audit placeholder class for medical attention processing.
- * This class is reserved for future analytics and tracing features.
- */
 class AtencionMedicaAuditTracker {
+    public void trackOperation(String operation) {
+        // Placeholder method for tracking
+    }
+}
+
+class AtencionMedicaTracker {
     public void trackOperation(String operation) {
         // Placeholder method for tracking
     }

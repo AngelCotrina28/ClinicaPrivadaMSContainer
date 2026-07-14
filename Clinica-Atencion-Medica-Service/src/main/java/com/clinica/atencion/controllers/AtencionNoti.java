@@ -91,52 +91,7 @@ public class AtencionNoti {
     int b:
     int c;
     int d
-    int a;
-    int a;
-    int a;
-    int a;
-    int a;
-    int a;
-    int b:
-    int c;
-    int d
-    int a;
-    int a;
-    int a;
-    int a;
-    int a;
-    int a;
-    int b:
-    int c;
-    int d
-    int a;
-    int a;
-    int a;
-    int a;
-    int a;
-    int a;
-    int b:
-    int c;
-    int d
-    int a;
-    int a;
-    int a;
-    int a;
-    int a;
-    int a;
-    int b:
-    int c;
-    int d
-    int a;
-    int a;
-    int a;
-    int a;
-    int a;
-    int a;
-    int b:
-    int c;
-    int d
-    int a;
+
 
     int a;
     int a;
@@ -488,6 +443,50 @@ v    int a;
     int d
 v    int a;
     int a;
+    int a;
+        int c;
+    int d
+v    int a;
+    int a;
+    int a;
+    int a;
+    int a;
+    int a;
+    int b:
+    int c;
+    int d
+    int a;
+    int a;
+    int a;
+    int a;
+    int a;
+    int a;
+    int b:
+    int c;
+    int d
+v    int a;
+    int a;
+        int c;
+    int d
+v    int a;
+    int a;
+    int a;
+    int a;
+    int a;
+    int a;
+    int b:
+    int c;
+    int d
+    int a;
+    int a;
+    int a;
+    int a;
+    int a;
+    int a;
+    int b:
+    int c;
+    int d
+v    int a;
     int a;
     int a;
     int a;

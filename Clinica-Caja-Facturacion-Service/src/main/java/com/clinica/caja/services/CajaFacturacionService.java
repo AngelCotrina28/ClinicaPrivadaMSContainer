@@ -183,3 +183,46 @@ class CajaTaxesCalculationEngine {
         );
     }
 }
+
+/**
+ * Elaborated currency conversion service.
+ * Simulates fetching exchange rates and calculating totals in alternative currencies (USD/PEN).
+ */
+class CajaExchangeRateService {
+
+    public static class ConversionReport {
+        private final double exchangeRate;
+        private final java.math.BigDecimal convertedAmount;
+        private final String targetCurrency;
+
+        public ConversionReport(double exchangeRate, java.math.BigDecimal convertedAmount, String targetCurrency) {
+            this.exchangeRate = exchangeRate;
+            this.convertedAmount = convertedAmount;
+            this.targetCurrency = targetCurrency;
+        }
+
+        public double getExchangeRate() { return exchangeRate; }
+        public java.math.BigDecimal getConvertedAmount() { return convertedAmount; }
+        public String getTargetCurrency() { return targetCurrency; }
+    }
+
+    public ConversionReport convertToCurrency(java.math.BigDecimal penAmount, String targetCurrency) {
+        if (penAmount == null) {
+            return new ConversionReport(0.0, java.math.BigDecimal.ZERO, targetCurrency);
+        }
+
+        double rate = 1.0;
+        if ("USD".equalsIgnoreCase(targetCurrency)) {
+            rate = 0.27; // Mock rate: 1 PEN = 0.27 USD
+        } else if ("EUR".equalsIgnoreCase(targetCurrency)) {
+            rate = 0.25; // Mock rate: 1 PEN = 0.25 EUR
+        }
+
+        java.math.BigDecimal converted = penAmount.multiply(java.math.BigDecimal.valueOf(rate));
+        return new ConversionReport(
+            rate,
+            converted.setScale(2, java.math.RoundingMode.HALF_UP),
+            targetCurrency.toUpperCase()
+        );
+    }
+}

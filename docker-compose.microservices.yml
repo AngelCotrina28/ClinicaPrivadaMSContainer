@@ -17,6 +17,24 @@ services:
       timeout: 5s
       retries: 10
 
+  seed-mysql-auth:
+    image: mysql:8.4
+    container_name: clinica-seed-mysql-auth
+    restart: "no"
+    environment:
+      MYSQL_PWD: "${MYSQL_AUTH_ROOT_PASSWORD:-ClinicaMysqlRootLocal123!}"
+    volumes:
+      - ./database/mysql/auth/schema.sql:/seed/01-schema.sql:ro
+      - ./database/mysql/auth/data.sql:/seed/02-data.sql:ro
+    depends_on:
+      mysql-auth:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >-
+        mysql --protocol=TCP -h mysql-auth -uroot < /seed/01-schema.sql &&
+        mysql --protocol=TCP -h mysql-auth -uroot < /seed/02-data.sql
+
   mysql-caja:
     image: mysql:8.4
     container_name: clinica-mysql-caja
@@ -35,6 +53,24 @@ services:
       timeout: 5s
       retries: 10
 
+  seed-mysql-caja:
+    image: mysql:8.4
+    container_name: clinica-seed-mysql-caja
+    restart: "no"
+    environment:
+      MYSQL_PWD: "${MYSQL_CAJA_ROOT_PASSWORD:-ClinicaCajaRootLocal123!}"
+    volumes:
+      - ./database/mysql/caja/schema.sql:/seed/01-schema.sql:ro
+      - ./database/mysql/caja/data.sql:/seed/02-data.sql:ro
+    depends_on:
+      mysql-caja:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >-
+        mysql --protocol=TCP -h mysql-caja -uroot < /seed/01-schema.sql &&
+        mysql --protocol=TCP -h mysql-caja -uroot < /seed/02-data.sql
+
   postgres-atencion:
     image: postgres:16-alpine
     container_name: clinica-postgres-atencion
@@ -52,6 +88,27 @@ services:
       timeout: 5s
       retries: 5
 
+  seed-postgres-atencion:
+    image: postgres:16-alpine
+    container_name: clinica-seed-postgres-atencion
+    restart: "no"
+    environment:
+      PGHOST: postgres-atencion
+      PGDATABASE: clinica_atencion_db
+      PGUSER: clinica_atencion_user
+      PGPASSWORD: "${POSTGRES_ATENCION_PASSWORD:-ClinicaAtencionPostgresLocal123!}"
+    volumes:
+      - ./database/postgresql/atencion/schema.sql:/seed/01-schema.sql:ro
+      - ./database/postgresql/atencion/data.sql:/seed/02-data.sql:ro
+    depends_on:
+      postgres-atencion:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >-
+        psql -v ON_ERROR_STOP=1 -f /seed/01-schema.sql &&
+        psql -v ON_ERROR_STOP=1 -f /seed/02-data.sql
+
   postgres-notificaciones:
     image: postgres:16-alpine
     container_name: clinica-postgres-notificaciones
@@ -60,7 +117,7 @@ services:
       POSTGRES_USER: clinica_notificaciones_user
       POSTGRES_PASSWORD: "${POSTGRES_NOTIFICACIONES_PASSWORD:-ClinicaPostgresLocal123!}"
     ports:
-      - "5432:5432"
+      - "5434:5432"
     volumes:
       - postgres_notificaciones_data:/var/lib/postgresql/data
     healthcheck:
@@ -68,6 +125,27 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  seed-postgres-notificaciones:
+    image: postgres:16-alpine
+    container_name: clinica-seed-postgres-notificaciones
+    restart: "no"
+    environment:
+      PGHOST: postgres-notificaciones
+      PGDATABASE: clinica_notificaciones_db
+      PGUSER: clinica_notificaciones_user
+      PGPASSWORD: "${POSTGRES_NOTIFICACIONES_PASSWORD:-ClinicaPostgresLocal123!}"
+    volumes:
+      - ./database/postgresql/notificaciones/schema.sql:/seed/01-schema.sql:ro
+      - ./database/postgresql/notificaciones/data.sql:/seed/02-data.sql:ro
+    depends_on:
+      postgres-notificaciones:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >-
+        psql -v ON_ERROR_STOP=1 -f /seed/01-schema.sql &&
+        psql -v ON_ERROR_STOP=1 -f /seed/02-data.sql
 
   mongo-citas:
     image: mongo:7
@@ -77,7 +155,7 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: "${MONGO_CITAS_PASSWORD:-ClinicaMongoLocal123!}"
       MONGO_INITDB_DATABASE: clinica_citas_db
     ports:
-      - "27017:27017"
+      - "27018:27017"
     volumes:
       - mongo_citas_data:/data/db
     healthcheck:
@@ -85,6 +163,29 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  seed-mongo-citas:
+    image: mongo:7
+    container_name: clinica-seed-mongo-citas
+    restart: "no"
+    environment:
+      MONGO_CITAS_USER: clinica_citas_admin
+      MONGO_CITAS_PASSWORD: "${MONGO_CITAS_PASSWORD:-ClinicaMongoLocal123!}"
+    volumes:
+      - ./database/mongodb/citas/schema.mongodb.js:/seed/01-schema.mongodb.js:ro
+      - ./database/mongodb/citas/data.mongodb.js:/seed/02-data.mongodb.js:ro
+    depends_on:
+      mongo-citas:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >-
+        mongosh --quiet --host mongo-citas --username "$${MONGO_CITAS_USER}"
+        --password "$${MONGO_CITAS_PASSWORD}" --authenticationDatabase admin
+        /seed/01-schema.mongodb.js &&
+        mongosh --quiet --host mongo-citas --username "$${MONGO_CITAS_USER}"
+        --password "$${MONGO_CITAS_PASSWORD}" --authenticationDatabase admin
+        /seed/02-data.mongodb.js
 
   config-server:
     build:
@@ -97,6 +198,7 @@ services:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8888/actuator/health | grep UP"]
       interval: 10s
       timeout: 5s
+      start_period: 120s
       retries: 10
 
   eureka-server:
@@ -116,6 +218,7 @@ services:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8761/actuator/health | grep UP"]
       interval: 10s
       timeout: 5s
+      start_period: 120s
       retries: 10
 
   auth-service:
@@ -129,14 +232,20 @@ services:
       AUTH_DB_URL: "jdbc:mysql://mysql-auth:3306/clinica_auth_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
       AUTH_DB_USER: clinica_auth_user
       AUTH_DB_PASSWORD: "${MYSQL_AUTH_PASSWORD:-ClinicaMysqlLocal123!}"
-      SYSTEM_ADMIN_PASSWORD: "${AUTH_ADMIN_PASSWORD:-ClinicaAdminLocal123!}"
-      JWT_SECRET: "${JWT_SECRET:-Q2xpbmljYURlbW9TZWNyZXRMb2NhbFBhcmFEZXNhcnJvbGxvMjAyNg==}"
-      CORS_ALLOWED_ORIGINS: "http://localhost:4200,http://127.0.0.1:4200"
+      SYSTEM_ADMIN_PASSWORD: "${SYSTEM_ADMIN_PASSWORD:-ClinicaAdminLocal123!}"
+      JWT_SECRET: "${JWT_SECRET:-Y2xpbmljYS1sb2NhbC1kZXYtb25seS0yMDI2LWNoYW5nZS1tZS0xMjM0NTY3ODkw}"
+      AUTH_ADMIN_USERNAME: "${AUTH_ADMIN_USERNAME:-admin}"
+      AUTH_ADMIN_EMAIL: "${AUTH_ADMIN_EMAIL:-admin@clinica.local}"
+      AUTH_ADMIN_NAME: "${AUTH_ADMIN_NAME:-Administrador General}"
+      AUTH_SEED_ENABLED: "${AUTH_SEED_ENABLED:-true}"
+      DEMO_DATA_ENABLED: "${DEMO_DATA_ENABLED:-true}"
+      DEMO_USER_PASSWORD: "${DEMO_USER_PASSWORD:-ClinicaDemoLocal123!}"
+      CORS_ALLOWED_ORIGINS: "${CORS_ALLOWED_ORIGINS:-http://localhost:4200,http://127.0.0.1:4200}"
     ports:
       - "8091:8091"
     depends_on:
-      mysql-auth:
-        condition: service_healthy
+      seed-mysql-auth:
+        condition: service_completed_successfully
       config-server:
         condition: service_healthy
       eureka-server:
@@ -145,6 +254,7 @@ services:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8091/actuator/health | grep UP"]
       interval: 10s
       timeout: 5s
+      start_period: 180s
       retries: 10
 
   notificaciones-service:
@@ -158,13 +268,13 @@ services:
       NOTIFICACIONES_DB_URL: "jdbc:postgresql://postgres-notificaciones:5432/clinica_notificaciones_db"
       NOTIFICACIONES_DB_USER: clinica_notificaciones_user
       NOTIFICACIONES_DB_PASSWORD: "${POSTGRES_NOTIFICACIONES_PASSWORD:-ClinicaPostgresLocal123!}"
-      JWT_SECRET: "${JWT_SECRET:-Q2xpbmljYURlbW9TZWNyZXRMb2NhbFBhcmFEZXNhcnJvbGxvMjAyNg==}"
-      CORS_ALLOWED_ORIGINS: "http://localhost:4200,http://127.0.0.1:4200"
+      JWT_SECRET: "${JWT_SECRET:-Y2xpbmljYS1sb2NhbC1kZXYtb25seS0yMDI2LWNoYW5nZS1tZS0xMjM0NTY3ODkw}"
+      CORS_ALLOWED_ORIGINS: "${CORS_ALLOWED_ORIGINS:-http://localhost:4200,http://127.0.0.1:4200}"
     ports:
       - "8092:8092"
     depends_on:
-      postgres-notificaciones:
-        condition: service_healthy
+      seed-postgres-notificaciones:
+        condition: service_completed_successfully
       config-server:
         condition: service_healthy
       eureka-server:
@@ -173,6 +283,7 @@ services:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8092/actuator/health | grep UP"]
       interval: 10s
       timeout: 5s
+      start_period: 180s
       retries: 10
 
   citas-service:
@@ -184,13 +295,15 @@ services:
       SPRING_CONFIG_IMPORT: "configserver:http://config-server:8888"
       EUREKA_DEFAULT_ZONE: "http://eureka-server:8761/eureka/"
       CITAS_MONGO_URI: "mongodb://clinica_citas_admin:${MONGO_CITAS_PASSWORD:-ClinicaMongoLocal123!}@mongo-citas:27017/clinica_citas_db?authSource=admin"
-      JWT_SECRET: "${JWT_SECRET:-Q2xpbmljYURlbW9TZWNyZXRMb2NhbFBhcmFEZXNhcnJvbGxvMjAyNg==}"
-      CORS_ALLOWED_ORIGINS: "http://localhost:4200,http://127.0.0.1:4200"
+      MONGODB_HEALTH_ENABLED: "${MONGODB_HEALTH_ENABLED:-true}"
+      MONGO_LEGACY_TIMEZONE: "${MONGO_LEGACY_TIMEZONE:-UTC}"
+      JWT_SECRET: "${JWT_SECRET:-Y2xpbmljYS1sb2NhbC1kZXYtb25seS0yMDI2LWNoYW5nZS1tZS0xMjM0NTY3ODkw}"
+      CORS_ALLOWED_ORIGINS: "${CORS_ALLOWED_ORIGINS:-http://localhost:4200,http://127.0.0.1:4200}"
     ports:
       - "8093:8093"
     depends_on:
-      mongo-citas:
-        condition: service_healthy
+      seed-mongo-citas:
+        condition: service_completed_successfully
       config-server:
         condition: service_healthy
       eureka-server:
@@ -199,6 +312,7 @@ services:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8093/actuator/health | grep UP"]
       interval: 10s
       timeout: 5s
+      start_period: 180s
       retries: 10
 
   atencion-medica-service:
@@ -212,13 +326,13 @@ services:
       ATENCION_DB_URL: "jdbc:postgresql://postgres-atencion:5432/clinica_atencion_db"
       ATENCION_DB_USER: clinica_atencion_user
       ATENCION_DB_PASSWORD: "${POSTGRES_ATENCION_PASSWORD:-ClinicaAtencionPostgresLocal123!}"
-      JWT_SECRET: "${JWT_SECRET:-Q2xpbmljYURlbW9TZWNyZXRMb2NhbFBhcmFEZXNhcnJvbGxvMjAyNg==}"
-      CORS_ALLOWED_ORIGINS: "http://localhost:4200,http://127.0.0.1:4200"
+      JWT_SECRET: "${JWT_SECRET:-Y2xpbmljYS1sb2NhbC1kZXYtb25seS0yMDI2LWNoYW5nZS1tZS0xMjM0NTY3ODkw}"
+      CORS_ALLOWED_ORIGINS: "${CORS_ALLOWED_ORIGINS:-http://localhost:4200,http://127.0.0.1:4200}"
     ports:
       - "8094:8094"
     depends_on:
-      postgres-atencion:
-        condition: service_healthy
+      seed-postgres-atencion:
+        condition: service_completed_successfully
       config-server:
         condition: service_healthy
       eureka-server:
@@ -227,6 +341,7 @@ services:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8094/actuator/health | grep UP"]
       interval: 10s
       timeout: 5s
+      start_period: 180s
       retries: 10
 
   caja-facturacion-service:
@@ -240,13 +355,13 @@ services:
       CAJA_DB_URL: "jdbc:mysql://mysql-caja:3306/clinica_caja_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
       CAJA_DB_USER: clinica_caja_user
       CAJA_DB_PASSWORD: "${MYSQL_CAJA_PASSWORD:-ClinicaCajaMysqlLocal123!}"
-      JWT_SECRET: "${JWT_SECRET:-Q2xpbmljYURlbW9TZWNyZXRMb2NhbFBhcmFEZXNhcnJvbGxvMjAyNg==}"
-      CORS_ALLOWED_ORIGINS: "http://localhost:4200,http://127.0.0.1:4200"
+      JWT_SECRET: "${JWT_SECRET:-Y2xpbmljYS1sb2NhbC1kZXYtb25seS0yMDI2LWNoYW5nZS1tZS0xMjM0NTY3ODkw}"
+      CORS_ALLOWED_ORIGINS: "${CORS_ALLOWED_ORIGINS:-http://localhost:4200,http://127.0.0.1:4200}"
     ports:
       - "8095:8095"
     depends_on:
-      mysql-caja:
-        condition: service_healthy
+      seed-mysql-caja:
+        condition: service_completed_successfully
       config-server:
         condition: service_healthy
       eureka-server:
@@ -255,6 +370,7 @@ services:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8095/actuator/health | grep UP"]
       interval: 10s
       timeout: 5s
+      start_period: 180s
       retries: 10
 
   gateway-service:
@@ -270,12 +386,14 @@ services:
       CITAS_SERVICE_URL: "http://citas-service:8093"
       ATENCION_SERVICE_URL: "http://atencion-medica-service:8094"
       CAJA_SERVICE_URL: "http://caja-facturacion-service:8095"
-      BACKEND_URL: "http://host.docker.internal:8080"
-      CITAS_LEGACY_ROUTE_ENABLED: "false"
-      ATENCION_LEGACY_ROUTE_ENABLED: "false"
-      CAJA_LEGACY_ROUTE_ENABLED: "false"
-      CORS_ALLOWED_ORIGINS: "http://localhost:4200,http://127.0.0.1:4200"
-      FRONTEND_ORIGIN: "http://localhost:4200"
+      BACKEND_URL: "${BACKEND_URL:-http://host.docker.internal:8080}"
+      CITAS_LEGACY_ROUTE_ENABLED: "${CITAS_LEGACY_ROUTE_ENABLED:-false}"
+      ATENCION_LEGACY_ROUTE_ENABLED: "${ATENCION_LEGACY_ROUTE_ENABLED:-false}"
+      CAJA_LEGACY_ROUTE_ENABLED: "${CAJA_LEGACY_ROUTE_ENABLED:-false}"
+      CORS_ALLOWED_ORIGINS: "${CORS_ALLOWED_ORIGINS:-http://localhost:4200,http://127.0.0.1:4200}"
+      FRONTEND_ORIGIN: "${FRONTEND_ORIGIN:-http://localhost:4200}"
+      GATEWAY_CONNECT_TIMEOUT_SECONDS: "${GATEWAY_CONNECT_TIMEOUT_SECONDS:-30}"
+      GATEWAY_REQUEST_TIMEOUT_SECONDS: "${GATEWAY_REQUEST_TIMEOUT_SECONDS:-120}"
     ports:
       - "8090:8090"
     depends_on:
@@ -295,6 +413,7 @@ services:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8090/actuator/health | grep UP"]
       interval: 10s
       timeout: 5s
+      start_period: 120s
       retries: 10
 
 volumes:

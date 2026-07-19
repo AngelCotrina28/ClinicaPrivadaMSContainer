@@ -33,21 +33,24 @@ Backend monolitico:   http://localhost:8080
 ```text
 /api/auth/**             -> Auth Service
 /api/notificaciones/**   -> Notificaciones Service
-/api/citas/**            -> Citas Service cuando CITAS_LEGACY_ROUTE_ENABLED=true
-/api/atenciones/**       -> Atencion Medica Service cuando ATENCION_LEGACY_ROUTE_ENABLED=true
-/api/caja/**             -> Caja Facturacion Service cuando CAJA_LEGACY_ROUTE_ENABLED=true
+/api/ms/citas/**         -> Citas Service
+/api/ms/atenciones/**    -> Atencion Medica Service
+/api/ms/caja/**          -> Caja Facturacion Service
+/api/ms/notificaciones/** -> Notificaciones Service
 /api/**                  -> Backend monolitico como fallback
 ```
 
-Las rutas de negocio se activan con flags para permitir migracion gradual. Si un flag esta en `false`, el Gateway deja que esa ruta siga al backend monolitico como fallback.
+Las tres banderas de rutas heredadas se mantienen en `false`: así el frontend conserva sus contratos con el backend principal y `/api/ms/**` permite probar los servicios nuevos sin ambiguedad.
 
 ## Ejecutar
 
+La ruta soportada carga todas las variables y dependencias desde la raiz:
+
 ```powershell
-cd Clinica-Gateway-Service
-.\mvnw.cmd -DskipTests package
-java -jar target\gateway-service-0.0.1-SNAPSHOT.jar
+.\scripts\start-microservices.ps1
 ```
+
+El Gateway arranca despues de que Config Server, Eureka y los microservicios estan saludables.
 
 ## Probar
 
@@ -59,7 +62,7 @@ Invoke-RestMethod -Uri "http://localhost:8090/gateway/routes"
 Si Auth Service esta levantado, este login pasa por el Gateway:
 
 ```powershell
-$body = @{ username = "admin"; password = $env:AUTH_ADMIN_PASSWORD } | ConvertTo-Json
+$body = @{ username = "admin"; password = "ClinicaAdminLocal123!" } | ConvertTo-Json
 Invoke-RestMethod -Uri "http://localhost:8090/api/auth/login" -Method Post -Body $body -ContentType "application/json"
 ```
 

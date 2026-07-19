@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -89,10 +90,15 @@ public class CitaService {
 
     private Cita buscar(String id) {
         return citaRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("La cita indicada no existe."));
+                .orElseThrow(() -> new NoSuchElementException("La cita indicada no existe."));
     }
 
     private void validarHorario(LocalTime horaInicio, LocalTime horaFin) {
+        if (horaInicio.getSecond() != 0 || horaInicio.getNano() != 0
+                || horaFin.getSecond() != 0 || horaFin.getNano() != 0) {
+            throw new IllegalArgumentException("Las horas deben indicarse con precision de minutos.");
+        }
+
         if (!horaInicio.isBefore(horaFin)) {
             throw new IllegalArgumentException("La hora de inicio debe ser menor a la hora de fin.");
         }

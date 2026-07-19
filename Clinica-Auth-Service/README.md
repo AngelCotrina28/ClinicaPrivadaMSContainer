@@ -21,15 +21,15 @@ Tablas principales:
 - `roles`
 - `usuarios`
 
-## Ejecucion local
+## Ejecucion local recomendada
+
+Desde la raiz del contenedor ejecuta:
 
 ```powershell
-cd Clinica-Auth-Service
-.\mvnw.cmd -DskipTests package
-java -jar target\auth-service-0.0.1-SNAPSHOT.jar
+.\scripts\start-microservices.ps1
 ```
 
-Por defecto local corre en:
+Así se carga el `.env` raiz, se inicia MySQL, se ejecutan las semillas y luego arranca Auth en:
 
 ```text
 http://localhost:8091
@@ -45,6 +45,8 @@ password: valor configurado en SYSTEM_ADMIN_PASSWORD
 rol: ADMINISTRADOR
 ```
 
+En el perfil local, `DEMO_DATA_ENABLED=true` crea ademas seis usuarios funcionales: `recepcionista`, `jefe_enfermeria`, `enfermero`, `medico`, `tecnico_farmacia` y `cajero`. Comparten el valor local de `DEMO_USER_PASSWORD`. Si un username ya existe, su contrasena y sus datos se conservan. En Render la bandera permanece en `false`.
+
 ## Endpoints principales
 
 ```text
@@ -59,7 +61,7 @@ GET  /actuator/health
 ## Prueba rapida
 
 ```powershell
-$body = @{ username = "admin"; password = $env:SYSTEM_ADMIN_PASSWORD } | ConvertTo-Json
+$body = @{ username = "admin"; password = "ClinicaAdminLocal123!" } | ConvertTo-Json
 $login = Invoke-RestMethod -Uri "http://localhost:8091/api/auth/login" -Method Post -Body $body -ContentType "application/json"
 $login.token
 ```

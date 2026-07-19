@@ -23,4 +23,6 @@ services:
       - key: EUREKA_CLIENT_ENABLED
         value: "false"
       - key: MONGODB_HEALTH_ENABLED
-        value: "false"
+        value: "true"
+      - key: MONGO_LEGACY_TIMEZONE
+        value: "UTC"

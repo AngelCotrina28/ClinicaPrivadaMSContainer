@@ -1,120 +1,74 @@
-# Clinica Privada - Microservices Container
+# Clinica Privada - Microservicios
 
-Repositorio contenedor para los microservicios de la Clinica Privada.
+Contenedor Maven de la arquitectura de microservicios de la Clinica Privada. Incluye los servicios, cinco bases de datos independientes, Docker Compose, Kubernetes, datos demo y verificaciones funcionales.
 
-La idea es mantener en una sola carpeta todos los backends independientes que forman la arquitectura de microservicios, parecido a un repositorio contenedor academico.
+**Acceso para la evaluacion:** consulta [`CREDENCIALES_DEMO.md`](CREDENCIALES_DEMO.md) para los usuarios locales por rol y las URLs de ingreso.
 
-## Microservicios
+## Arquitectura
 
-| Tipo | Carpeta | Puerto local | Base de datos | Responsabilidad |
-| --- | --- | ---: | --- | --- |
-| Infraestructura | `Clinica-Config-Server` | 8888 | No aplica | Centraliza configuracion de microservicios |
-| Infraestructura | `Clinica-Eureka-Server` | 8761 | No aplica | Registro y descubrimiento de servicios |
-| Infraestructura | `Clinica-Auth-Service` | 8091 | MySQL | Login, usuarios, roles y emision de JWT |
-| Apoyo | `Clinica-Notificaciones-Service` | 8092 | PostgreSQL | Registro y consulta de notificaciones |
-| Negocio | `Clinica-Citas-Service` | 8093 | MongoDB | Reserva, disponibilidad y cancelacion de citas |
-| Negocio | `Clinica-Atencion-Medica-Service` | 8094 | PostgreSQL | Atenciones, diagnosticos, historial y recetas |
-| Negocio | `Clinica-Caja-Facturacion-Service` | 8095 | MySQL | Deudas, pagos, comprobantes y caja |
-| Infraestructura | `Clinica-Gateway-Service` | 8090 | No aplica | Entrada unica y enrutamiento hacia los microservicios |
+| Tipo | Servicio | Puerto | Base de datos |
+| --- | --- | ---: | --- |
+| Infraestructura | Config Server | 8888 | No aplica |
+| Infraestructura | Eureka Server | 8761 | No aplica |
+| Infraestructura | Auth Service | 8091 | MySQL |
+| Apoyo | Notificaciones Service | 8092 | PostgreSQL |
+| Negocio | Citas Service | 8093 | MongoDB |
+| Negocio | Atencion Medica Service | 8094 | PostgreSQL |
+| Negocio | Caja Facturacion Service | 8095 | MySQL |
+| Infraestructura | Gateway Service | 8090 | No aplica |
 
-La arquitectura completa con tres microservicios de negocio esta documentada en `PROPUESTA_MICROSERVICIOS.md`.
+El Gateway es la entrada unica. Las rutas `/api/ms/**` apuntan expresamente a los microservicios nuevos. Las rutas heredadas de citas, atencion y caja conservan compatibilidad con el backend principal durante la migracion; por eso sus tres banderas `*_LEGACY_ROUTE_ENABLED` deben permanecer en `false` mientras el frontend siga usando esos contratos.
 
-## Estructura
+## Inicio rapido con Docker Compose
 
-```text
-Clinica-Privada-Microservices-Container/
-  Clinica-Config-Server/
-  Clinica-Eureka-Server/
-  Clinica-Auth-Service/
-  Clinica-Citas-Service/
-  Clinica-Atencion-Medica-Service/
-  Clinica-Caja-Facturacion-Service/
-  Clinica-Notificaciones-Service/
-  Clinica-Gateway-Service/
-  database/
-  k8s/
-  postman/
-  scripts/
-  pom.xml
-  docker-compose.microservices.yml
-  GUIA_MICROSERVICIOS_PROFESORA.md
-  PROPUESTA_MICROSERVICIOS.md
+Requisitos: Docker Desktop, PowerShell y puertos 3307, 3308, 5433, 5434, 27018, 8090-8095, 8761 y 8888 disponibles.
+
+Si Windows bloquea scripts en la terminal actual, habilitalos solo para ese proceso (no requiere cambiar la politica global):
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 ```
-
-## Orden de arranque
-
-El flujo sigue el orden trabajado en clase:
-
-```text
-Bases de datos
-   -> Config Server
-   -> Eureka Server
-   -> Microservicios de negocio/apoyo/infraestructura
-   -> Gateway
-```
-
-## Ejecucion local con Docker Compose
-
-Requisitos:
-
-- Java 21
-- Docker Desktop
-- PowerShell
-
-Comandos:
 
 ```powershell
 .\scripts\start-microservices.ps1
 .\scripts\verify-microservices.ps1
 ```
 
-URLs principales:
+La verificacion predeterminada es de solo lectura: salud, CORS, login, cantidades demo y fallback autenticado al backend principal. La prueba opcional siguiente ejerce POST/PATCH y por tanto crea registros transitorios:
 
-```text
-Config Server: http://localhost:8888/clinica-gateway-service/default
-Eureka:        http://localhost:8761
-Gateway:       http://localhost:8090
+```powershell
+.\scripts\verify-microservices.ps1 -ExerciseWrites
 ```
 
-El Gateway publica dos tipos de rutas:
+El primer comando:
 
-```text
-/api/ms/citas/**       -> Citas Service
-/api/ms/atenciones/**  -> Atencion Medica Service
-/api/ms/caja/**        -> Caja Facturacion Service
-/api/ms/notificaciones/** -> Notificaciones Service
-/api/**                -> rutas principales y compatibilidad con el backend original
-```
+1. Crea `.env` desde `.env.example` si no existe y valida todas las variables obligatorias.
+2. Construye las imagenes.
+3. Inicia las cinco bases de datos.
+4. Ejecuta una semilla idempotente por base de datos.
+5. Inicia Config Server, Eureka, los microservicios y el Gateway.
 
-El prefijo `/api/ms` permite probar directamente los microservicios nuevos sin
-romper las rutas heredadas que el frontend todavia utiliza durante la migracion.
+No hace falta ejecutar SQL manualmente. Las semillas dejan como minimo 7 roles, 7 citas, 4 atenciones, 5 deudas, 4 pagos y 6 notificaciones. Repetir el arranque no duplica esos registros.
 
-Para apagar Docker Compose:
+Para detener los contenedores conservando los volumenes:
 
 ```powershell
 .\scripts\stop-microservices.ps1
 ```
 
-## Ejecucion local con Kubernetes
+Puertos de bases de datos expuestos en el host:
 
-La carpeta `k8s/` contiene los manifiestos equivalentes al Compose, siguiendo el orden visto en clase:
+| Motor | Servicio | Host | Contenedor |
+| --- | --- | ---: | ---: |
+| MySQL | Auth | 3307 | 3306 |
+| MySQL | Caja | 3308 | 3306 |
+| PostgreSQL | Atencion | 5433 | 5432 |
+| PostgreSQL | Notificaciones | 5434 | 5432 |
+| MongoDB | Citas | 27018 | 27017 |
 
-```text
-Namespace y configuracion
-   -> Bases de datos
-   -> Config Server
-   -> Eureka Server
-   -> Microservicios
-   -> Gateway
-```
+## Kubernetes local
 
-Antes de ejecutarlo, habilita Kubernetes en Docker Desktop:
-
-```text
-Docker Desktop -> Settings -> Kubernetes -> Enable Kubernetes
-```
-
-Luego ejecuta:
+Habilita Kubernetes en Docker Desktop y ejecuta:
 
 ```powershell
 .\scripts\start-k8s.ps1
@@ -122,31 +76,54 @@ Luego ejecuta:
 .\scripts\verify-k8s.ps1
 ```
 
-Para apagar Kubernetes:
+`start-k8s.ps1` construye o reutiliza las imagenes locales, crea el Secret desde `.env`, genera ConfigMaps desde `database/**`, espera las bases, ejecuta cinco Jobs de semilla y finalmente inicia la plataforma. Se puede repetir: los Jobs se recrean y los datos demo siguen siendo idempotentes.
+
+El apagado normal conserva los PVC:
 
 ```powershell
 .\scripts\stop-k8s.ps1
 ```
 
+Solo para borrar el entorno y sus datos locales:
+
+```powershell
+.\scripts\stop-k8s.ps1 -Destroy
+```
+
 ## Variables de entorno
 
-Cada microservicio tiene su propio archivo `.env.example`.
+- `.env.example` contiene valores publicos exclusivos para desarrollo local.
+- `.env` es creado automaticamente, se ignora en Git y puede personalizarse sin modificar manifiestos.
+- Los seis servicios de aplicacion que requieren credenciales o endpoints tienen su propio `.env.example`; Config Server y Eureka usan valores locales por defecto.
+- Las credenciales desplegadas no se versionan ni se reemplazan. En Render, las variables marcadas `sync: false` deben existir en el panel del servicio.
+- La misma `JWT_SECRET` debe usarse en el backend principal y en todos los servicios que validan JWT.
 
-Los archivos `.env` reales no se suben a GitHub porque contienen contrasenas y configuracion local.
+Los ambientes Postman local y Render incluyen sus respectivas cuentas publicas de evaluacion y se pueden importar y ejecutar. No contienen credenciales de bases de datos, JWT ni infraestructura.
 
-## Esquemas y pruebas API
+Con `DEMO_DATA_ENABLED=true`, Auth crea sin sobrescribir cuentas existentes los usuarios `recepcionista`, `jefe_enfermeria`, `enfermero`, `medico`, `tecnico_farmacia` y `cajero`. Todos usan localmente el valor de `DEMO_USER_PASSWORD`; Render mantiene esta opcion desactivada.
 
-- `database/` contiene los esquemas y datos de ejemplo para MySQL, PostgreSQL y MongoDB.
-- `postman/` contiene la coleccion completa y ambientes para ejecucion local y Render.
-- `docs/` contiene el informe editable, el PDF y los diagramas arquitectonicos.
-- `scripts/verify-microservices.ps1` ejecuta el mismo flujo principal desde PowerShell.
+## Compatibilidad con el frontend y backend principal
 
-## Notas
+Para probar el frontend completo durante la migracion, inicia tambien el backend principal en el puerto 8080. Desde Docker el Gateway lo alcanza mediante `BACKEND_URL=http://host.docker.internal:8080`. Auth y Notificaciones ya se enrutan directamente; las rutas `/api/ms/citas`, `/api/ms/atenciones` y `/api/ms/caja` permiten demostrar los servicios nuevos sin cambiar los contratos heredados del frontend.
 
-- Cada microservicio tiene su propio `Dockerfile`.
-- Cada microservicio tiene su propio `pom.xml`.
-- La raiz tiene un `pom.xml` padre con modulos, igual que un repositorio contenedor Maven.
-- Cada microservicio usa su propia base de datos.
-- Config Server y Eureka Server no tienen base de datos porque son servicios de infraestructura.
-- El Gateway no guarda datos; solo enruta solicitudes.
-- Kubernetes esta documentado en la carpeta `k8s/`.
+## Validacion de codigo
+
+Desde la raiz:
+
+```powershell
+.\mvnw.cmd test
+docker compose --env-file .env.example -f docker-compose.microservices.yml config --quiet
+```
+
+Los detalles de datos, Kubernetes y Postman estan en `database/README.md`, `k8s/README.md` y `postman/README.md`.
+
+## Semilla controlada de Render
+
+`scripts/seed-render-demo.ps1` existe para reconstruir los datos demo desplegados si fuera necesario. Consulta antes de cada POST, no borra ni sobrescribe y no reintenta escrituras a ciegas. Al final valida el login y perfil de las siete cuentas publicadas. Muta Render de forma idempotente y no se usa para el arranque local.
+
+```powershell
+$adminPassword = Read-Host "Password del administrador de Render" -AsSecureString
+.\scripts\seed-render-demo.ps1 -AdminPassword $adminPassword
+```
+
+El script recibe `AdminPassword` en tiempo de ejecucion, no lo incluye en su codigo y nunca imprime el token.

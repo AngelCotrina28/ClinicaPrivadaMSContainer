@@ -6,8 +6,10 @@ Import the collection and one environment:
 - `Clinica-Local.postman_environment.json` for Docker Compose or Kubernetes.
 - `Clinica-Render.postman_environment.json` for the cloud deployment.
 
-For Render, complete the `password` environment variable with the Auth Service
-administrator password. Run the folders in numeric order with Collection Runner.
+The local environment is import-and-run with the public `admin` demo account.
+The Render environment is also import-and-run with the public evaluation account
+documented in `CREDENCIALES_DEMO.md`. Run the folders in numeric order with
+Collection Runner.
 The login request stores the JWT and the creation requests store all generated
 identifiers automatically.
 

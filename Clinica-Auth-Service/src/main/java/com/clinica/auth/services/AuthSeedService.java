@@ -39,11 +39,21 @@ public class AuthSeedService implements CommandLineRunner {
     @Value("${app.seed.admin.name}")
     private String adminName;
 
+    @Value("${app.seed.demo.enabled:false}")
+    private boolean demoDataEnabled;
+
+    @Value("${app.seed.demo.password:}")
+    private String demoUserPassword;
+
     @Override
     @Transactional
     public void run(String... args) {
         if (!seedEnabled) {
             return;
+        }
+        if (adminPassword == null || adminPassword.isBlank()) {
+            throw new IllegalStateException(
+                    "SYSTEM_ADMIN_PASSWORD es obligatorio cuando AUTH_SEED_ENABLED=true.");
         }
 
         List<Rol> roles = List.of(
@@ -57,6 +67,74 @@ public class AuthSeedService implements CommandLineRunner {
 
         roles.forEach(this::crearRolSiNoExiste);
         sincronizarAdministrador();
+        if (demoDataEnabled) {
+            crearUsuariosDemo();
+        }
+    }
+
+    private void crearUsuariosDemo() {
+        if (demoUserPassword == null || demoUserPassword.isBlank()) {
+            throw new IllegalStateException(
+                    "DEMO_USER_PASSWORD es obligatorio cuando DEMO_DATA_ENABLED=true.");
+        }
+
+        List<UsuarioDemo> usuariosDemo = List.of(
+                new UsuarioDemo(
+                        "recepcionista",
+                        "recepcionista@clinica.local",
+                        "Recepcionista Demo",
+                        "RECEPCIONISTA"),
+                new UsuarioDemo(
+                        "jefe_enfermeria",
+                        "jefe.enfermeria@clinica.local",
+                        "Jefe de Enfermeria Demo",
+                        "JEFE_ENFERMERIA"),
+                new UsuarioDemo(
+                        "enfermero",
+                        "enfermero@clinica.local",
+                        "Enfermero Demo",
+                        "ENFERMERO"),
+                new UsuarioDemo(
+                        "medico",
+                        "medico@clinica.local",
+                        "Medico Demo",
+                        "MEDICO"),
+                new UsuarioDemo(
+                        "tecnico_farmacia",
+                        "tecnico.farmacia@clinica.local",
+                        "Tecnico de Farmacia Demo",
+                        "TECNICO_FARMACIA"),
+                new UsuarioDemo(
+                        "cajero",
+                        "cajero@clinica.local",
+                        "Cajero Demo",
+                        "CAJERO"));
+
+        usuariosDemo.forEach(this::crearUsuarioDemoSiNoExiste);
+    }
+
+    private void crearUsuarioDemoSiNoExiste(UsuarioDemo demo) {
+        if (usuarioRepository.findByUsernameIgnoreCase(demo.username()).isPresent()) {
+            logger.info("Usuario demo conservado sin cambios: {}", demo.username());
+            return;
+        }
+        if (usuarioRepository.existsByEmailIgnoreCase(demo.email())) {
+            logger.warn("No se creo {} porque el correo demo ya esta registrado.", demo.username());
+            return;
+        }
+
+        Rol rol = rolRepository.findByNombreIgnoreCase(demo.rol())
+                .orElseThrow(() -> new IllegalStateException("No existe el rol demo " + demo.rol()));
+        Usuario usuario = Usuario.builder()
+                .username(demo.username())
+                .email(demo.email())
+                .nombreCompleto(demo.nombreCompleto())
+                .passwordHash(passwordEncoder.encode(demoUserPassword))
+                .rol(rol)
+                .activo(true)
+                .build();
+        usuarioRepository.save(usuario);
+        logger.info("Usuario demo creado: {}", demo.username());
     }
 
     private void sincronizarAdministrador() {
@@ -105,5 +183,8 @@ public class AuthSeedService implements CommandLineRunner {
         if (!rolRepository.existsByNombreIgnoreCase(rol.getNombre())) {
             rolRepository.save(rol);
         }
+    }
+
+    private record UsuarioDemo(String username, String email, String nombreCompleto, String rol) {
     }
 }

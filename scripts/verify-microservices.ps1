@@ -1,23 +1,46 @@
 param(
     [string]$GatewayBaseUrl = "http://localhost:8090",
-    [switch]$SkipDirectHealth
+    [switch]$SkipDirectHealth,
+    [switch]$ExerciseWrites
 )
 
 $ErrorActionPreference = "Stop"
 
+$localEnv = & (Join-Path $PSScriptRoot "initialize-local-env.ps1") -PassThru
 $GatewayBaseUrl = $GatewayBaseUrl.TrimEnd("/")
 
-$adminUsername = if ($env:AUTH_ADMIN_USERNAME) { $env:AUTH_ADMIN_USERNAME } else { "admin" }
-$adminPassword = if ($env:AUTH_ADMIN_PASSWORD) { $env:AUTH_ADMIN_PASSWORD } else { "ClinicaAdminLocal123!" }
+$adminUsername = if ($env:AUTH_ADMIN_USERNAME) { $env:AUTH_ADMIN_USERNAME } else { $localEnv["AUTH_ADMIN_USERNAME"] }
+$adminPassword = if ($env:SYSTEM_ADMIN_PASSWORD) { $env:SYSTEM_ADMIN_PASSWORD } else { $localEnv["SYSTEM_ADMIN_PASSWORD"] }
 
-function Invoke-Health($name, $url) {
-    try {
-        $response = Invoke-RestMethod -Uri $url -TimeoutSec 5
-        Write-Host "$name health: $($response.status)"
-    } catch {
-        Write-Host "$name health: DOWN"
-        throw
+function Invoke-Health($name, $url, [int]$Attempts = 12) {
+    $lastError = $null
+    for ($attempt = 1; $attempt -le $Attempts; $attempt++) {
+        try {
+            $response = Invoke-RestMethod -Uri $url -TimeoutSec 5
+            if ($response.status -eq "UP") {
+                Write-Host "$name health: UP"
+                return
+            }
+            $lastError = "estado $($response.status)"
+        } catch {
+            $lastError = $_.Exception.Message
+        }
+
+        if ($attempt -lt $Attempts) {
+            Start-Sleep -Seconds 5
+        }
     }
+
+    Write-Host "$name health: DOWN"
+    throw "$name no quedo saludable tras $Attempts intentos. Ultimo error: $lastError"
+}
+
+function Assert-MinimumCount($name, $items, [int]$minimum) {
+    $count = @($items).Count
+    if ($count -lt $minimum) {
+        throw "$name no contiene los datos demo esperados. Minimo=$minimum Actual=$count"
+    }
+    Write-Host "$name sembrados: $count (minimo $minimum)"
 }
 
 if ($SkipDirectHealth) {
@@ -33,6 +56,22 @@ if ($SkipDirectHealth) {
     Invoke-Health "Caja Facturacion" "http://localhost:8095/actuator/health"
 }
 
+$preflightHeaders = @{
+    Origin = "http://localhost:4200"
+    "Access-Control-Request-Method" = "POST"
+    "Access-Control-Request-Headers" = "authorization,content-type"
+}
+$preflight = Invoke-WebRequest `
+    -Uri "$GatewayBaseUrl/api/auth/login" `
+    -Method Options `
+    -Headers $preflightHeaders `
+    -UseBasicParsing `
+    -TimeoutSec 10
+if ($preflight.Headers["Access-Control-Allow-Origin"] -ne "http://localhost:4200") {
+    throw "El Gateway no devolvio el encabezado CORS esperado para el frontend local."
+}
+Write-Host "Preflight CORS por Gateway: OK"
+
 $loginBody = @{ username = $adminUsername; password = $adminPassword } | ConvertTo-Json
 $login = Invoke-RestMethod `
     -Uri "$GatewayBaseUrl/api/auth/login" `
@@ -43,6 +82,39 @@ $login = Invoke-RestMethod `
 
 $headers = @{ Authorization = "Bearer $($login.token)" }
 Write-Host "Login por Gateway: OK ($($login.username) / $($login.rol))"
+
+$roles = Invoke-RestMethod -Uri "$GatewayBaseUrl/api/ms/auth/roles" -Headers $headers -TimeoutSec 10
+$usuarios = Invoke-RestMethod -Uri "$GatewayBaseUrl/api/ms/auth/usuarios" -Headers $headers -TimeoutSec 10
+$notificacionesDemo = Invoke-RestMethod -Uri "$GatewayBaseUrl/api/ms/notificaciones" -Headers $headers -TimeoutSec 10
+$citasDemoPaciente = Invoke-RestMethod -Uri "$GatewayBaseUrl/api/ms/citas/paciente/1" -Headers $headers -TimeoutSec 10
+$atencionesDemoPaciente = Invoke-RestMethod -Uri "$GatewayBaseUrl/api/ms/atenciones/paciente/1" -Headers $headers -TimeoutSec 10
+$deudasDemo = Invoke-RestMethod -Uri "$GatewayBaseUrl/api/ms/caja/deudas" -Headers $headers -TimeoutSec 10
+$pagosDemoPaciente = Invoke-RestMethod -Uri "$GatewayBaseUrl/api/ms/caja/pagos/paciente/1" -Headers $headers -TimeoutSec 10
+
+Assert-MinimumCount "Roles" $roles 7
+Assert-MinimumCount "Usuarios Auth" $usuarios 7
+Assert-MinimumCount "Notificaciones" $notificacionesDemo 6
+Assert-MinimumCount "Citas del paciente demo 1" $citasDemoPaciente 3
+Assert-MinimumCount "Atenciones del paciente demo 1" $atencionesDemoPaciente 1
+Assert-MinimumCount "Deudas" $deudasDemo 5
+Assert-MinimumCount "Pagos del paciente demo 1" $pagosDemoPaciente 2
+
+$dashboard = Invoke-RestMethod `
+    -Uri "$GatewayBaseUrl/api/dashboard/resumen" `
+    -Headers $headers `
+    -TimeoutSec 15
+if ($null -eq $dashboard) {
+    throw "El backend principal no devolvio el resumen del dashboard."
+}
+Write-Host "JWT compartido y fallback al backend principal: OK"
+
+if (-not $ExerciseWrites) {
+    Write-Host "Validacion de solo lectura completa: OK"
+    Write-Host "Usa -ExerciseWrites solo si deseas crear datos transitorios y probar POST/PATCH."
+    return
+}
+
+Write-Warning "ExerciseWrites esta activo: se crearan notificacion, cita, atencion, deuda y pago de prueba."
 
 $notifBody = @{
     destinatarioTipo = "PACIENTE"
@@ -65,11 +137,12 @@ $notificacion = Invoke-RestMethod `
 
 Write-Host "Notificacion creada por Gateway: ID=$($notificacion.id)"
 
+$testDate = (Get-Date).Date.AddDays(30).ToString("yyyy-MM-dd")
 $citaBody = @{
     pacienteId = 1
     medicoId = 10
     especialidadId = 2
-    fecha = "2026-07-05"
+    fecha = $testDate
     horaInicio = "10:00"
     horaFin = "10:30"
     consultorio = "Consultorio 201"

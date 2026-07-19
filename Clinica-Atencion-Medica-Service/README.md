@@ -21,6 +21,10 @@ Tabla principal:
 
 - `atenciones_medicas`
 
+## Ejecucion local recomendada
+
+Desde la raiz, `.\scripts\start-microservices.ps1` carga el `.env`, inicia PostgreSQL, ejecuta la semilla y arranca el servicio en `http://localhost:8094`.
+
 ## Endpoints principales
 
 ```text

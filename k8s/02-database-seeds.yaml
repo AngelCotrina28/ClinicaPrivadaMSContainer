@@ -1,0 +1,195 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: seed-mysql-auth
+  namespace: clinica-ms
+spec:
+  backoffLimit: 5
+  template:
+    metadata:
+      labels:
+        app: seed-mysql-auth
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: seed
+          image: mysql:8.4
+          env:
+            - name: MYSQL_PWD
+              valueFrom:
+                secretKeyRef:
+                  name: clinica-ms-secrets
+                  key: mysql-auth-root-password
+          command: ["/bin/sh", "-c"]
+          args:
+            - >-
+              mysql --protocol=TCP -h mysql-auth -uroot < /seed/schema.sql &&
+              mysql --protocol=TCP -h mysql-auth -uroot < /seed/data.sql
+          volumeMounts:
+            - name: seed-files
+              mountPath: /seed
+              readOnly: true
+      volumes:
+        - name: seed-files
+          configMap:
+            name: seed-mysql-auth
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: seed-mysql-caja
+  namespace: clinica-ms
+spec:
+  backoffLimit: 5
+  template:
+    metadata:
+      labels:
+        app: seed-mysql-caja
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: seed
+          image: mysql:8.4
+          env:
+            - name: MYSQL_PWD
+              valueFrom:
+                secretKeyRef:
+                  name: clinica-ms-secrets
+                  key: mysql-caja-root-password
+          command: ["/bin/sh", "-c"]
+          args:
+            - >-
+              mysql --protocol=TCP -h mysql-caja -uroot < /seed/schema.sql &&
+              mysql --protocol=TCP -h mysql-caja -uroot < /seed/data.sql
+          volumeMounts:
+            - name: seed-files
+              mountPath: /seed
+              readOnly: true
+      volumes:
+        - name: seed-files
+          configMap:
+            name: seed-mysql-caja
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: seed-postgres-atencion
+  namespace: clinica-ms
+spec:
+  backoffLimit: 5
+  template:
+    metadata:
+      labels:
+        app: seed-postgres-atencion
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: seed
+          image: postgres:16-alpine
+          env:
+            - name: PGHOST
+              value: postgres-atencion
+            - name: PGDATABASE
+              value: clinica_atencion_db
+            - name: PGUSER
+              value: clinica_atencion_user
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: clinica-ms-secrets
+                  key: postgres-atencion-password
+          command: ["/bin/sh", "-c"]
+          args:
+            - >-
+              psql -v ON_ERROR_STOP=1 -f /seed/schema.sql &&
+              psql -v ON_ERROR_STOP=1 -f /seed/data.sql
+          volumeMounts:
+            - name: seed-files
+              mountPath: /seed
+              readOnly: true
+      volumes:
+        - name: seed-files
+          configMap:
+            name: seed-postgres-atencion
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: seed-postgres-notificaciones
+  namespace: clinica-ms
+spec:
+  backoffLimit: 5
+  template:
+    metadata:
+      labels:
+        app: seed-postgres-notificaciones
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: seed
+          image: postgres:16-alpine
+          env:
+            - name: PGHOST
+              value: postgres-notificaciones
+            - name: PGDATABASE
+              value: clinica_notificaciones_db
+            - name: PGUSER
+              value: clinica_notificaciones_user
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: clinica-ms-secrets
+                  key: postgres-notificaciones-password
+          command: ["/bin/sh", "-c"]
+          args:
+            - >-
+              psql -v ON_ERROR_STOP=1 -f /seed/schema.sql &&
+              psql -v ON_ERROR_STOP=1 -f /seed/data.sql
+          volumeMounts:
+            - name: seed-files
+              mountPath: /seed
+              readOnly: true
+      volumes:
+        - name: seed-files
+          configMap:
+            name: seed-postgres-notificaciones
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: seed-mongo-citas
+  namespace: clinica-ms
+spec:
+  backoffLimit: 5
+  template:
+    metadata:
+      labels:
+        app: seed-mongo-citas
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: seed
+          image: mongo:7
+          env:
+            - name: MONGO_CITAS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: clinica-ms-secrets
+                  key: mongo-citas-password
+          command: ["/bin/sh", "-c"]
+          args:
+            - >-
+              mongosh --quiet --host mongo-citas --username clinica_citas_admin
+              --password "$MONGO_CITAS_PASSWORD" --authenticationDatabase admin
+              /seed/schema.mongodb.js &&
+              mongosh --quiet --host mongo-citas --username clinica_citas_admin
+              --password "$MONGO_CITAS_PASSWORD" --authenticationDatabase admin
+              /seed/data.mongodb.js
+          volumeMounts:
+            - name: seed-files
+              mountPath: /seed
+              readOnly: true
+      volumes:
+        - name: seed-files
+          configMap:
+            name: seed-mongo-citas

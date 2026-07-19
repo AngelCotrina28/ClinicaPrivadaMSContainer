@@ -98,21 +98,3 @@ public class AtencionMedicaService {
         return valor.trim();
     }
 }
-
-class AtencionMedicaAuditTracker {
-    public void trackOperation(String operation) {
-        // Placeholder method for tracking
-    }
-}
-
-class AtencionMedicaTracker {
-    public void trackOperation(String operation) {
-        // Placeholder method for tracking
-    }
-}
-
-class Atencion {
-    public void trackOperation(String operation) {
-        // Placeholder method for tracking
-    }
-}

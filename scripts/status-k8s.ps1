@@ -4,25 +4,43 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+function Invoke-KubectlStatus {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Description,
+        [Parameter(Mandatory = $true)]
+        [string[]]$Arguments
+    )
+
+    & kubectl @Arguments
+    if ($LASTEXITCODE -ne 0) {
+        throw "No se pudo consultar $Description en el namespace $Namespace."
+    }
+}
+
 Write-Host "Pods:"
-kubectl -n $Namespace get pods -o wide
+Invoke-KubectlStatus "los pods" @("-n", $Namespace, "get", "pods", "-o", "wide")
 
 Write-Host ""
 Write-Host "Deployments:"
-kubectl -n $Namespace get deployments
+Invoke-KubectlStatus "los deployments" @("-n", $Namespace, "get", "deployments")
 
 Write-Host ""
 Write-Host "Services:"
-kubectl -n $Namespace get services
+Invoke-KubectlStatus "los servicios" @("-n", $Namespace, "get", "services")
 
 Write-Host ""
 Write-Host "Persistent volumes:"
-kubectl -n $Namespace get pvc
+Invoke-KubectlStatus "los PVC" @("-n", $Namespace, "get", "pvc")
 
 Write-Host ""
 Write-Host "Endpoints listos:"
-kubectl -n $Namespace get endpoints
+Invoke-KubectlStatus "los endpoints" @("-n", $Namespace, "get", "endpoints")
 
 Write-Host ""
 Write-Host "Eventos recientes:"
-kubectl -n $Namespace get events --sort-by=.lastTimestamp | Select-Object -Last 25
+$events = & kubectl -n $Namespace get events --sort-by=.lastTimestamp
+if ($LASTEXITCODE -ne 0) {
+    throw "No se pudieron consultar los eventos del namespace $Namespace."
+}
+$events | Select-Object -Last 25

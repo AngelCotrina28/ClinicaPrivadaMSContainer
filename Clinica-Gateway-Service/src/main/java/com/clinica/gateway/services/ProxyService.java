@@ -9,15 +9,14 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.Enumeration;
 import java.util.Set;
-import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 @Service
-@RequiredArgsConstructor
 public class ProxyService {
 
     private static final Logger logger = LoggerFactory.getLogger(ProxyService.class);
@@ -47,9 +46,22 @@ public class ProxyService {
             "location");
 
     private final GatewayRouter router;
-    private final HttpClient httpClient = HttpClient.newBuilder()
-            .connectTimeout(Duration.ofSeconds(10))
-            .build();
+    private final HttpClient httpClient;
+    private final Duration requestTimeout;
+
+    public ProxyService(
+            GatewayRouter router,
+            @Value("${gateway.connect-timeout-seconds:30}") long connectTimeoutSeconds,
+            @Value("${gateway.request-timeout-seconds:120}") long requestTimeoutSeconds) {
+        if (connectTimeoutSeconds <= 0 || requestTimeoutSeconds <= 0) {
+            throw new IllegalArgumentException("Los timeouts del Gateway deben ser mayores que cero.");
+        }
+        this.router = router;
+        this.httpClient = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofSeconds(connectTimeoutSeconds))
+                .build();
+        this.requestTimeout = Duration.ofSeconds(requestTimeoutSeconds);
+    }
 
     public ResponseEntity<byte[]> reenviar(HttpServletRequest request) throws IOException, InterruptedException {
         String destino = construirDestino(request);
@@ -58,7 +70,7 @@ public class ProxyService {
 
         HttpRequest.Builder builder = HttpRequest.newBuilder()
                 .uri(URI.create(destino))
-                .timeout(Duration.ofSeconds(30));
+                .timeout(requestTimeout);
 
         copiarHeaders(request, builder);
         builder.method(request.getMethod(), bodyPublisher(request.getMethod(), body));

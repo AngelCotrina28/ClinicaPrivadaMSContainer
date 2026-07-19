@@ -30,15 +30,15 @@ Coleccion principal:
 
 Valida tokens JWT emitidos por `Clinica-Auth-Service`. No consulta la base de datos de Auth.
 
-## Ejecucion local
+## Ejecucion local recomendada
+
+Desde la raiz del contenedor ejecuta:
 
 ```powershell
-cd Clinica-Citas-Service
-.\mvnw.cmd -DskipTests package
-java -jar target\citas-service-0.0.1-SNAPSHOT.jar
+.\scripts\start-microservices.ps1
 ```
 
-Por defecto corre en:
+Así se carga el `.env` raiz, se inicia MongoDB, se ejecutan las semillas y luego arranca Citas en:
 
 ```text
 http://localhost:8093
@@ -58,24 +58,24 @@ GET   /actuator/health
 
 ## Prueba via Gateway
 
-Activa `CITAS_LEGACY_ROUTE_ENABLED=true` en `Clinica-Gateway-Service/.env` y reinicia el Gateway.
+Mantén `CITAS_LEGACY_ROUTE_ENABLED=false` para no romper el contrato heredado del frontend. El prefijo `/api/ms` selecciona expresamente este microservicio.
 
 ```powershell
-$body = @{ username = "admin"; password = $env:AUTH_ADMIN_PASSWORD } | ConvertTo-Json
+$body = @{ username = "admin"; password = "ClinicaAdminLocal123!" } | ConvertTo-Json
 $login = Invoke-RestMethod -Uri "http://localhost:8090/api/auth/login" -Method Post -Body $body -ContentType "application/json"
 
 $cita = @{
   pacienteId = 1
   medicoId = 10
   especialidadId = 2
-  fecha = "2026-07-05"
+  fecha = (Get-Date).AddDays(30).ToString("yyyy-MM-dd")
   horaInicio = "09:00"
   horaFin = "09:30"
   consultorio = "Consultorio 201"
   motivo = "Consulta general"
 } | ConvertTo-Json
 
-Invoke-RestMethod -Uri "http://localhost:8090/api/citas" -Method Post -Body $cita -ContentType "application/json" -Headers @{ Authorization = "Bearer $($login.token)" }
+Invoke-RestMethod -Uri "http://localhost:8090/api/ms/citas" -Method Post -Body $cita -ContentType "application/json" -Headers @{ Authorization = "Bearer $($login.token)" }
 ```
 
 ## Clasificacion

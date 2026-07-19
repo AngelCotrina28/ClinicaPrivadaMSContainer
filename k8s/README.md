@@ -1,110 +1,69 @@
-# Despliegue local con Kubernetes
+# Kubernetes local
 
-Estos manifiestos replican la arquitectura del `docker-compose.microservices.yml`:
-
-1. Bases de datos.
-2. Config Server.
-3. Eureka Server.
-4. Microservicios de negocio/apoyo/infraestructura.
-5. Gateway.
+Estos manifiestos reproducen la arquitectura de Docker Compose en el namespace `clinica-ms`.
 
 ## Requisitos
 
 - Docker Desktop con Kubernetes habilitado.
-- Imagenes locales ya construidas por Docker Compose o Maven/Docker.
-- Contexto de Kubernetes apuntando a Docker Desktop.
+- Contexto `docker-desktop` disponible.
+- PowerShell y `kubectl` en PATH.
+- `.env` valido en la raiz; si falta, el script lo crea desde `.env.example`.
 
-```powershell
-kubectl config use-context docker-desktop
-```
+Si la terminal bloquea `.ps1`, ejecuta primero `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass`.
 
-Si `kubectl config get-contexts` no muestra `docker-desktop`, falta habilitar Kubernetes en Docker Desktop:
+## Desplegar
 
-```text
-Docker Desktop -> Settings -> Kubernetes -> Enable Kubernetes
-```
-
-## Desplegar con script
+Desde la raiz del repositorio:
 
 ```powershell
 .\scripts\start-k8s.ps1
 ```
 
-El script valida el contexto `docker-desktop`, reutiliza o construye las imagenes locales `clinica-*:local`, aplica los manifiestos de `k8s/` y espera los deployments.
-
-El orden de despliegue replica la clase:
+El script es la entrada recomendada porque hay recursos que no deben contener secretos versionados. Realiza este orden:
 
 ```text
-Namespace/configuracion
-  -> Bases de datos
-  -> Config Server y Eureka Server
-  -> Microservicios
+Namespace
+  -> ConfigMap y Secret generados desde .env
+  -> cinco bases de datos con PVC
+  -> ConfigMaps generados desde database/**
+  -> cinco Jobs de esquema y datos demo
+  -> Config Server y Eureka
+  -> microservicios
   -> Gateway
 ```
 
-## Ver estado sin probar flujo funcional
+Cada nueva ejecucion elimina solo los Jobs completados, los recrea y espera su resultado. No borra los PVC ni duplica los registros demo.
+
+No uses `kubectl apply -f k8s/` como sustituto del script: el Secret y los ConfigMaps de semillas se generan en tiempo de ejecucion y deliberadamente no estan en Git.
+
+## Estado y prueba funcional
 
 ```powershell
 .\scripts\status-k8s.ps1
+.\scripts\verify-k8s.ps1
 ```
 
-## Desplegar manualmente
+`verify-k8s.ps1` abre temporalmente un port-forward al Gateway y realiza validaciones de solo lectura: salud, CORS, login, cantidades minimas y fallback autenticado al backend principal.
+
+Para acceso manual:
 
 ```powershell
-kubectl apply -f k8s/
-kubectl -n clinica-ms get pods -w
-```
-
-## Exponer servicios para probar desde el navegador/Postman
-
-Ejecuta cada comando en una terminal distinta:
-
-```powershell
-kubectl -n clinica-ms port-forward svc/config-server 8888:8888
 kubectl -n clinica-ms port-forward svc/eureka-server 8761:8761
 kubectl -n clinica-ms port-forward svc/gateway-service 8090:8090
 ```
 
-URLs:
+## Detener sin perder datos
 
-```text
-Config Server: http://localhost:8888/clinica-gateway-service/default
-Eureka:        http://localhost:8761
-Gateway:       http://localhost:8090
-```
-
-## Probar
-
-Con script:
-
-```powershell
-.\scripts\verify-k8s.ps1
-```
-
-Manual:
-
-```powershell
-Invoke-RestMethod http://localhost:8090/actuator/health
-Invoke-RestMethod http://localhost:8090/gateway/routes
-```
-
-Login:
-
-```powershell
-$body = @{ username = "admin"; password = "ClinicaAdminLocal123!" } | ConvertTo-Json
-Invoke-RestMethod -Uri "http://localhost:8090/api/auth/login" -Method Post -Body $body -ContentType "application/json"
-```
-
-## Eliminar
-
-Con script:
+El apagado normal escala todos los Deployments a cero y conserva los PVC:
 
 ```powershell
 .\scripts\stop-k8s.ps1
 ```
 
-Manual:
+El siguiente arranque restaura las replicas desde los manifiestos.
+
+Para destruir expresamente el namespace, los PVC y los datos locales:
 
 ```powershell
-kubectl delete namespace clinica-ms
+.\scripts\stop-k8s.ps1 -Destroy
 ```

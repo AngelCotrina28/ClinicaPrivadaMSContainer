@@ -21,9 +21,18 @@ db.runCommand({
         pacienteId: { bsonType: ['long', 'int'] },
         medicoId: { bsonType: ['long', 'int'] },
         especialidadId: { bsonType: ['long', 'int', 'null'] },
-        fecha: { bsonType: ['date', 'string'] },
-        horaInicio: { bsonType: ['date', 'string'] },
-        horaFin: { bsonType: ['date', 'string'] },
+        fecha: {
+          bsonType: 'string',
+          pattern: '^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$'
+        },
+        horaInicio: {
+          bsonType: 'string',
+          pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$'
+        },
+        horaFin: {
+          bsonType: 'string',
+          pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$'
+        },
         consultorio: { bsonType: ['string', 'null'] },
         motivo: { bsonType: ['string', 'null'] },
         estado: { enum: ['PROGRAMADA', 'CANCELADA', 'ATENDIDA'] },

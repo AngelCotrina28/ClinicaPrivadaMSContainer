@@ -32,6 +32,10 @@ services:
         sync: false
       - key: FRONTEND_ORIGIN
         value: "https://clinica-privada-frontend.vercel.app"
+      - key: GATEWAY_CONNECT_TIMEOUT_SECONDS
+        value: "30"
+      - key: GATEWAY_REQUEST_TIMEOUT_SECONDS
+        value: "120"
       - key: SPRING_CLOUD_CONFIG_ENABLED
         value: "false"
       - key: EUREKA_CLIENT_ENABLED

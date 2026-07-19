@@ -29,10 +29,16 @@ services:
       - key: AUTH_ADMIN_USERNAME
         value: "admin"
       - key: SYSTEM_ADMIN_PASSWORD
-        value: "Admin123"
+        sync: false
       - key: AUTH_ADMIN_EMAIL
         value: "admin@clinica.local"
       - key: AUTH_ADMIN_NAME
         value: "Administrador General"
+      - key: DEMO_DATA_ENABLED
+        value: "false"
+      - key: SPRING_CLOUD_CONFIG_ENABLED
+        value: "false"
+      - key: EUREKA_CLIENT_ENABLED
+        value: "false"
       - key: SPRINGDOC_ENABLED
         value: "true"

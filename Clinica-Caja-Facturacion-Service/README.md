@@ -23,6 +23,10 @@ Tablas principales:
 - `deudas`
 - `pagos`
 
+## Ejecucion local recomendada
+
+Desde la raiz, `.\scripts\start-microservices.ps1` carga el `.env`, inicia MySQL, ejecuta la semilla y arranca el servicio en `http://localhost:8095`.
+
 ## Endpoints principales
 
 ```text

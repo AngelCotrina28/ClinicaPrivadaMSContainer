@@ -15,6 +15,9 @@ Push-Location $root
 try {
     Write-Host "Validando deployments listos antes de probar..."
     kubectl -n $Namespace wait --for=condition=available deployment --all --timeout=10m | Out-Host
+    if ($LASTEXITCODE -ne 0) {
+        throw "No todos los deployments de $Namespace quedaron disponibles."
+    }
 
     Write-Host "Abriendo port-forward del Gateway en $gatewayBaseUrl..."
     $portForward = Start-Process `

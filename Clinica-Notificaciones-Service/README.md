@@ -29,15 +29,15 @@ Tabla principal:
 
 Valida tokens JWT emitidos por `Clinica-Auth-Service`. No consulta la base de datos de Auth; solo verifica la firma y expiracion del token.
 
-## Ejecucion local
+## Ejecucion local recomendada
+
+Desde la raiz del contenedor ejecuta:
 
 ```powershell
-cd Clinica-Notificaciones-Service
-.\mvnw.cmd -DskipTests package
-java -jar target\notificaciones-service-0.0.1-SNAPSHOT.jar
+.\scripts\start-microservices.ps1
 ```
 
-Por defecto corre en:
+Así se carga el `.env` raiz, se inicia PostgreSQL, se ejecutan las semillas y luego arranca Notificaciones en:
 
 ```text
 http://localhost:8092
@@ -59,7 +59,7 @@ GET   /actuator/health
 Primero obten un token desde Auth por Gateway:
 
 ```powershell
-$body = @{ username = "admin"; password = $env:AUTH_ADMIN_PASSWORD } | ConvertTo-Json
+$body = @{ username = "admin"; password = "ClinicaAdminLocal123!" } | ConvertTo-Json
 $login = Invoke-RestMethod -Uri "http://localhost:8090/api/auth/login" -Method Post -Body $body -ContentType "application/json"
 ```
 
@@ -77,7 +77,7 @@ $notif = @{
   referenciaId = 1001
 } | ConvertTo-Json
 
-Invoke-RestMethod -Uri "http://localhost:8090/api/notificaciones" -Method Post -Body $notif -ContentType "application/json" -Headers @{ Authorization = "Bearer $($login.token)" }
+Invoke-RestMethod -Uri "http://localhost:8090/api/ms/notificaciones" -Method Post -Body $notif -ContentType "application/json" -Headers @{ Authorization = "Bearer $($login.token)" }
 ```
 
 ## Clasificacion

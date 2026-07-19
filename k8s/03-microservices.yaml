@@ -44,6 +44,36 @@ spec:
                 secretKeyRef:
                   name: clinica-ms-secrets
                   key: auth-admin-password
+            - name: AUTH_ADMIN_USERNAME
+              valueFrom:
+                configMapKeyRef:
+                  name: clinica-ms-shared-config
+                  key: AUTH_ADMIN_USERNAME
+            - name: AUTH_ADMIN_EMAIL
+              valueFrom:
+                configMapKeyRef:
+                  name: clinica-ms-shared-config
+                  key: AUTH_ADMIN_EMAIL
+            - name: AUTH_ADMIN_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: clinica-ms-shared-config
+                  key: AUTH_ADMIN_NAME
+            - name: DEMO_DATA_ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  name: clinica-ms-shared-config
+                  key: DEMO_DATA_ENABLED
+            - name: AUTH_SEED_ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  name: clinica-ms-shared-config
+                  key: AUTH_SEED_ENABLED
+            - name: DEMO_USER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: clinica-ms-secrets
+                  key: demo-user-password
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:
@@ -186,6 +216,16 @@ spec:
                   key: EUREKA_DEFAULT_ZONE
             - name: CITAS_MONGO_URI
               value: mongodb://clinica_citas_admin:$(MONGO_CITAS_PASSWORD)@mongo-citas:27017/clinica_citas_db?authSource=admin
+            - name: MONGODB_HEALTH_ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  name: clinica-ms-shared-config
+                  key: MONGODB_HEALTH_ENABLED
+            - name: MONGO_LEGACY_TIMEZONE
+              valueFrom:
+                configMapKeyRef:
+                  name: clinica-ms-shared-config
+                  key: MONGO_LEGACY_TIMEZONE
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:

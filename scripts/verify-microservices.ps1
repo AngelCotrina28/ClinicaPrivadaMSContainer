@@ -1,7 +1,9 @@
 param(
     [string]$GatewayBaseUrl = "http://localhost:8090",
     [switch]$SkipDirectHealth,
-    [switch]$ExerciseWrites
+    [switch]$ExerciseWrites,
+    [ValidateRange(10, 300)]
+    [int]$RequestTimeoutSec = 60
 )
 
 $ErrorActionPreference = "Stop"
@@ -66,7 +68,7 @@ $preflight = Invoke-WebRequest `
     -Method Options `
     -Headers $preflightHeaders `
     -UseBasicParsing `
-    -TimeoutSec 10
+    -TimeoutSec $RequestTimeoutSec
 if ($preflight.Headers["Access-Control-Allow-Origin"] -ne "http://localhost:4200") {
     throw "El Gateway no devolvio el encabezado CORS esperado para el frontend local."
 }
@@ -78,18 +80,18 @@ $login = Invoke-RestMethod `
     -Method Post `
     -Body $loginBody `
     -ContentType "application/json" `
-    -TimeoutSec 10
+    -TimeoutSec $RequestTimeoutSec
 
 $headers = @{ Authorization = "Bearer $($login.token)" }
 Write-Host "Login por Gateway: OK ($($login.username) / $($login.rol))"
 
-$roles = Invoke-RestMethod -Uri "$GatewayBaseUrl/api/ms/auth/roles" -Headers $headers -TimeoutSec 10
-$usuarios = Invoke-RestMethod -Uri "$GatewayBaseUrl/api/ms/auth/usuarios" -Headers $headers -TimeoutSec 10
-$notificacionesDemo = Invoke-RestMethod -Uri "$GatewayBaseUrl/api/ms/notificaciones" -Headers $headers -TimeoutSec 10
-$citasDemoPaciente = Invoke-RestMethod -Uri "$GatewayBaseUrl/api/ms/citas/paciente/1" -Headers $headers -TimeoutSec 10
-$atencionesDemoPaciente = Invoke-RestMethod -Uri "$GatewayBaseUrl/api/ms/atenciones/paciente/1" -Headers $headers -TimeoutSec 10
-$deudasDemo = Invoke-RestMethod -Uri "$GatewayBaseUrl/api/ms/caja/deudas" -Headers $headers -TimeoutSec 10
-$pagosDemoPaciente = Invoke-RestMethod -Uri "$GatewayBaseUrl/api/ms/caja/pagos/paciente/1" -Headers $headers -TimeoutSec 10
+$roles = Invoke-RestMethod -Uri "$GatewayBaseUrl/api/ms/auth/roles" -Headers $headers -TimeoutSec $RequestTimeoutSec
+$usuarios = Invoke-RestMethod -Uri "$GatewayBaseUrl/api/ms/auth/usuarios" -Headers $headers -TimeoutSec $RequestTimeoutSec
+$notificacionesDemo = Invoke-RestMethod -Uri "$GatewayBaseUrl/api/ms/notificaciones" -Headers $headers -TimeoutSec $RequestTimeoutSec
+$citasDemoPaciente = Invoke-RestMethod -Uri "$GatewayBaseUrl/api/ms/citas/paciente/1" -Headers $headers -TimeoutSec $RequestTimeoutSec
+$atencionesDemoPaciente = Invoke-RestMethod -Uri "$GatewayBaseUrl/api/ms/atenciones/paciente/1" -Headers $headers -TimeoutSec $RequestTimeoutSec
+$deudasDemo = Invoke-RestMethod -Uri "$GatewayBaseUrl/api/ms/caja/deudas" -Headers $headers -TimeoutSec $RequestTimeoutSec
+$pagosDemoPaciente = Invoke-RestMethod -Uri "$GatewayBaseUrl/api/ms/caja/pagos/paciente/1" -Headers $headers -TimeoutSec $RequestTimeoutSec
 
 Assert-MinimumCount "Roles" $roles 7
 Assert-MinimumCount "Usuarios Auth" $usuarios 7
@@ -102,7 +104,7 @@ Assert-MinimumCount "Pagos del paciente demo 1" $pagosDemoPaciente 2
 $dashboard = Invoke-RestMethod `
     -Uri "$GatewayBaseUrl/api/dashboard/resumen" `
     -Headers $headers `
-    -TimeoutSec 15
+    -TimeoutSec $RequestTimeoutSec
 if ($null -eq $dashboard) {
     throw "El backend principal no devolvio el resumen del dashboard."
 }
@@ -133,7 +135,7 @@ $notificacion = Invoke-RestMethod `
     -Body $notifBody `
     -ContentType "application/json" `
     -Headers $headers `
-    -TimeoutSec 10
+    -TimeoutSec $RequestTimeoutSec
 
 Write-Host "Notificacion creada por Gateway: ID=$($notificacion.id)"
 
@@ -155,7 +157,7 @@ $cita = Invoke-RestMethod `
     -Body $citaBody `
     -ContentType "application/json" `
     -Headers $headers `
-    -TimeoutSec 10
+    -TimeoutSec $RequestTimeoutSec
 
 Write-Host "Cita creada por Gateway: ID=$($cita.id)"
 
@@ -176,7 +178,7 @@ $atencion = Invoke-RestMethod `
     -Body $atencionBody `
     -ContentType "application/json" `
     -Headers $headers `
-    -TimeoutSec 10
+    -TimeoutSec $RequestTimeoutSec
 
 Write-Host "Atencion medica registrada por Gateway: ID=$($atencion.id)"
 
@@ -191,7 +193,7 @@ $atencionCerrada = Invoke-RestMethod `
     -Body $cerrarAtencionBody `
     -ContentType "application/json" `
     -Headers $headers `
-    -TimeoutSec 10
+    -TimeoutSec $RequestTimeoutSec
 
 Write-Host "Atencion medica cerrada: $($atencionCerrada.estado)"
 
@@ -209,7 +211,7 @@ $deuda = Invoke-RestMethod `
     -Body $deudaBody `
     -ContentType "application/json" `
     -Headers $headers `
-    -TimeoutSec 10
+    -TimeoutSec $RequestTimeoutSec
 
 Write-Host "Deuda creada por Gateway: ID=$($deuda.id) Saldo=$($deuda.saldo)"
 
@@ -226,7 +228,7 @@ $pago = Invoke-RestMethod `
     -Body $pagoBody `
     -ContentType "application/json" `
     -Headers $headers `
-    -TimeoutSec 10
+    -TimeoutSec $RequestTimeoutSec
 
 Write-Host "Pago registrado por Gateway: ID=$($pago.id) Comprobante=$($pago.numeroComprobante)"
 
@@ -237,7 +239,7 @@ try {
         -Body $citaBody `
         -ContentType "application/json" `
         -Headers $headers `
-        -TimeoutSec 10 | Out-Null
+        -TimeoutSec $RequestTimeoutSec | Out-Null
     throw "El cruce de horario no fue bloqueado."
 } catch {
     if ($_.Exception.Message -eq "El cruce de horario no fue bloqueado.") {
@@ -253,7 +255,7 @@ $cancelada = Invoke-RestMethod `
     -Body $cancelBody `
     -ContentType "application/json" `
     -Headers $headers `
-    -TimeoutSec 10
+    -TimeoutSec $RequestTimeoutSec
 
 Write-Host "Cita cancelada: $($cancelada.estado)"
 Write-Host "Validacion completa: OK"
